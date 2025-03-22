@@ -1,7 +1,9 @@
 package repository
 
 import (
+	"Syllybea/UIcomponents"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -508,4 +510,48 @@ func (r *Repository) FilterCardsByLecturer(lecturerID int, search, fromDate, toD
 	}
 
 	return cards, nil
+}
+
+// InsertNewSyllabus converts the draft into a syllabus record and inserts it into the database.
+func (r *Repository) InsertSyllabusFromDraft(userID int, draft *UIcomponents.Draft) error {
+	// Create the base syllabus record.
+	now := time.Now()
+	syl := types.Syllabus{
+		ID:             0, // dummy value; DB will auto-increment
+		CourseID:       0,
+		LecturerID:     userID,
+		Status:         "Draft",
+		SubmissionDate: now, // Save the current time
+		CreatedAt:      now,
+		UpdatedAt:      now,
+		Data:           nil, // to be set below
+	}
+
+	// Look up the CourseID from the available courses.
+	courses, err := r.GetAllCourses()
+	if err != nil {
+		return err
+	}
+
+	for _, course := range courses {
+		if course.Name == draft.SelectedCourse {
+			syl.CourseID = course.ID
+			break
+		}
+	}
+
+	// Encode the draft into JSON.
+	jsonData, err := json.Marshal(draft)
+	if err != nil {
+		return err
+	}
+	syl.Data = jsonData
+
+	// When inserting, format the submission_date to "YYYY-MM-DD"
+	err = r.CreateSyllabus(&syl)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

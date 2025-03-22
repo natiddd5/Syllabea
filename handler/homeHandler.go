@@ -325,25 +325,39 @@ func RegisterRoutes(e *echo.Echo, repo *repository.Repository) {
 		userID, _ := mid.GetUserID(c)
 		user, _ := repo.GetUserByID(userID)
 		draft := GetUserDraft(user)
+		departments, _ := r.GetAllDepartments()
+		deptNames := make([]string, 0, len(departments))
+		for _, dept := range departments {
+			deptNames = append(deptNames, dept.Name)
+		}
+		draft.Departments = deptNames
+		draft.SyllabusDepartment = deptNames[0]
 
-		// Populate the dynamic list of departments.
-		draft.Departments = []string{
-			"מדעי המחשב",
-			"מדעי החיים",
-			"מדעי המדינה",
-			// add more departments as needed...
+		courses, _ := r.GetAllCourses()
+		courseNames := make([]string, 0, len(courses))
+		for _, course := range courses {
+			courseNames = append(courseNames, course.Name)
 		}
-		draft.Courses = []string{
-			"מבוא למדעי המחשב",
-			"תכנות בסיסי",
-			"אלגוריתמים",
-			"מערכות הפעלה",
-		}
+		draft.Courses = courseNames
+		draft.SelectedCourse = courseNames[0]
 
 		return c.Render(http.StatusOK, "create-syllabus", draft)
 	})
 
 	e.POST("update-syllabus", updateSyllabusHandler)
+
+	e.POST("/submit-syllabus", func(c echo.Context) error {
+		userID, _ := mid.GetUserID(c)
+		user, _ := r.GetUserByID(userID)
+		draft := GetUserDraft(user)
+		err := r.InsertSyllabusFromDraft(userID, draft)
+		if err != nil {
+			return c.String(http.StatusInternalServerError, "Error saving syllabus")
+		}
+		c.Response().Header().Set("HX-Redirect", "/dashboard")
+		draftCache.Delete(user.ID)
+		return c.String(http.StatusOK, "Redirecting...")
+	})
 
 }
 

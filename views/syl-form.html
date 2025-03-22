@@ -716,16 +716,16 @@
             </div>
 
             <!-- כפתור שליחה -->
-            <div class="form-section" style="text-align: center;">
-                <button
-                        class="form-submit-btn"
-                        type="submit"
-                        hx-post="/update-syllabus"
-                        hx-target="closest .form-wrapper"
-                        hx-swap="outerHTML">
-                    שלח
-                </button>
-            </div>
+            <button
+                    class="form-submit-btn"
+                    type="submit"
+                    hx-post="/submit-syllabus"
+                    hx-target="closest .form-wrapper"
+                    hx-swap="outerHTML">
+                שלח
+            </button>
+
+    </div>
         </form>
     </div>
 </div>
