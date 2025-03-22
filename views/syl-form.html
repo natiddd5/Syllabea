@@ -1,0 +1,1124 @@
+{{define "create-syllabus"}}
+<style>
+    /* === Layout: content + sidebar === */
+    .form-wrapper {
+        display: flex;
+        background-color: #f5f5f5;
+        direction: rtl;
+        text-align: right;
+        padding: 20px;
+        animation: fadeIn 0.8s ease-out;
+    }
+    .form-container {
+        flex: 1; /* take remaining space */
+        margin-right: 200px; /* space for the sidebar */
+        padding: 10px;
+    }
+
+    /* === Sidebar === */
+    .form-sidebar {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 200px;
+        height: 100vh;
+        border-left: 1px solid #ccc;
+        box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+        overflow-y: auto;
+        padding-top: 20px;
+        /* Align text to the left so the line is on the right side of it */
+        text-align: center;
+    }
+
+    .form-sidebar ul {
+        list-style: none;
+        margin: 0;
+        padding: 0 20px;
+        position: relative;
+    }
+
+    /* Vertical line on the far right side of the sidebar */
+    .form-sidebar ul::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        width: 2px;
+        background-color: #ccc;
+    }
+
+    .form-sidebar li {
+        position: relative;
+        margin: 50px 0;
+    }
+
+    /* The circle “dot” on the right side (on top of the line) */
+    .form-sidebar li::before {
+        content: "";
+        position: absolute;
+        right: -6px;
+        width: 14px;
+        height: 14px;
+        background-color: #ccc;
+        border-radius: 50%;
+        top: 10px;
+    }
+
+    /* Link styling */
+    .form-sidebar a {
+        display: inline-block;
+        text-decoration: none;
+        color: #333;
+        transition: color 0.2s;
+        margin-top: 5px;
+    }
+    .form-sidebar a:hover {
+        color: #666;
+    }
+
+    /* “active” step styling: color steps up to (and including) the current in green */
+    .form-sidebar li.active::before {
+        background-color: #4CAF50;
+    }
+    .form-sidebar li.active a {
+        color: #4CAF50;
+    }
+
+    /* === Form styling === */
+    .form-error-message {
+        color: red;
+        font-size: 12px;
+        margin-top: 4px;
+        display: block;
+    }
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(10px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    .form-input,
+    .form-select,
+    textarea.form-input {
+        animation: fadeInUp 0.5s ease-out;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .form-section {
+        background-color: #ffffff;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        transition: box-shadow 0.3s ease-in-out;
+    }
+    .form-section:hover {
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    }
+    .form-section-title {
+        font-size: 22px;
+        font-weight: normal;
+        margin-bottom: 15px;
+        color: #333;
+    }
+    .form-row {
+        display: flex;
+        gap: 30px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+    .form-group {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        margin-bottom: 20px;
+    }
+    .form-input,
+    .form-select,
+    textarea.form-input {
+        width: 100%;
+        padding: 8px 5px;
+        border: none;
+        border-bottom: 2px solid #ccc;
+        font-size: 16px;
+        background: transparent;
+        outline: none;
+        transition: border-color 0.3s, transform 0.2s;
+        resize: none;
+    }
+    .form-input:focus,
+    .form-select:focus,
+    textarea.form-input:focus {
+        border-bottom: 2px solid #666;
+        transform: scale(1.02);
+    }
+    .form-label {
+        margin-top: 5px;
+        color: #555;
+        font-size: 14px;
+    }
+    .form-select {
+        appearance: none;
+        cursor: pointer;
+    }
+    .form-checkbox-group {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    .form-checkbox-label {
+        font-size: 14px;
+        color: #333;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .form-checkbox-label input {
+        transform: scale(1.2);
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    .form-checkbox-label input:checked {
+        transform: scale(1.4);
+    }
+    .form-other-input {
+        flex: 1;
+        display: none;
+        animation: fadeIn 0.5s ease-in-out;
+    }
+    .form-submit-btn {
+        width: 100%;
+        padding: 12px;
+        background-color: #666;
+        color: #fff;
+        font-size: 16px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background 0.3s, transform 0.2s;
+    }
+    .form-submit-btn:hover {
+        background-color: #444;
+        transform: scale(1.05);
+    }
+
+    ol {
+        list-style-type: decimal;
+        margin: 0 0 20px 20px;
+        padding: 0;
+    }
+    ol li {
+        margin-bottom: 8px;
+    }
+    ul.form-bullet-list {
+        list-style-type: disc;
+        margin: 0;
+        padding: 0 1em;
+    }
+    ul.form-bullet-list li {
+        margin-bottom: 10px;
+        position: relative;
+    }
+    .form-add-btn {
+        border: none;
+        background-color: transparent;
+        color: #666;
+        font-size: 1.5em;
+        cursor: pointer;
+        margin-right: 10px;
+        transition: transform 0.2s, color 0.2s;
+    }
+    .form-add-btn:hover {
+        color: #333;
+        transform: scale(1.1);
+    }
+    .form-plus-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .form-plus-container label.form-label {
+        margin: 0;
+        line-height: 1.5;
+    }
+    .form-syllabus-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    .form-syllabus-table th, .form-syllabus-table td {
+        border: 1px solid #ccc;
+        padding: 10px;
+        text-align: center;
+    }
+    .form-syllabus-table th {
+        background-color: #eee;
+        font-weight: bold;
+    }
+    .form-add-row-btn {
+        border: none;
+        background-color: #666;
+        color: #fff;
+        font-size: 16px;
+        padding: 10px 15px;
+        cursor: pointer;
+        border-radius: 5px;
+        transition: background 0.3s, transform 0.2s;
+        margin-top: 10px;
+    }
+    .form-add-row-btn:hover {
+        background-color: #444;
+        transform: scale(1.05);
+    }
+    .form-requirement-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+    }
+    .form-remove-btn {
+        color: black;
+        border-radius: 20%;
+        border: none;
+        padding: 6px;
+        cursor: pointer;
+        font-size: 16px;
+        background: transparent;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: box-shadow 0.3s ease-in-out;
+    }
+    .form-remove-btn:hover {
+        box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2);
+    }
+    .form-remove-btn .material-icons {
+        font-size: 20px;
+        color: gray;
+        transition: color 0.3s;
+    }
+    .form-remove-btn:hover .material-icons {
+        color: black;
+    }
+    #form-grade-components-list {
+        list-style: none;
+        counter-reset: gradeCounter;
+        margin: 0;
+        padding: 0;
+    }
+    .form-grade-item {
+        counter-increment: gradeCounter;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 5px 0;
+    }
+    .form-grade-item::before {
+        content: counter(gradeCounter) ".";
+        margin-right: 10px;
+        font-weight: bold;
+        min-width: 2em;
+        text-align: right;
+    }
+    .form-grade-item input {
+        width: 45%;
+    }
+</style>
+</head>
+<body>
+
+<div class="form-wrapper">
+    <!-- SIDEBAR (fixed on the right) -->
+    <div class="form-sidebar">
+        <ul>
+            <li><a href="#lecturer-details">פרטי המרצה</a></li>
+            <li><a href="#course-requirements">דרישות הקורס</a></li>
+            <li><a href="#learning-outcomes">תוצרי למידה</a></li>
+            <li><a href="#course-objectives">מטרות הקורס</a></li>
+            <li><a href="#active-learning">למידה פעילה</a></li>
+            <li><a href="#course-subjects">נושאי הקורס</a></li>
+            <li><a href="#grade-composition">הרכב הציון</a></li>
+            <li><a href="#assignments-structure">מבנה המטלות</a></li>
+            <li><a href="#bibliography">ביבליוגרפיה</a></li>
+        </ul>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="form-container">
+        <form method="post">
+            <!-- פרטי המרצה -->
+            <div class="form-section" id="lecturer-details">
+                <h1 class="form-section-title">פרטי המרצה</h1>
+                <div class="form-row">
+                    <div class="form-group">
+                        <input class="form-input" type="text" name="LecturerName" value="{{.LecturerName}}" required
+                               hx-trigger=" change, blur"
+                               hx-post="/update-syllabus"
+                               hx-target="closest .form-wrapper"
+                               hx-swap="outerHTML"
+                               hx-vals='{"updateField": "LecturerName"}'>
+                        <label class="form-label" for="lecturer-name">שם המרצה</label>
+                    </div>
+                    <div class="form-group">
+                        <input class="form-input" type="email" name="LecturerEmail" value="{{.LecturerEmail}}" required
+                               hx-trigger=" change, blur"
+                               hx-post="/update-syllabus"
+                               hx-target="closest .form-wrapper"
+                               hx-swap="outerHTML"
+                               hx-vals='{"updateField": "LecturerEmail"}'>
+                        <label class="form-label" for="lecturer-email">אימייל</label>
+                    </div>
+                </div>
+
+                <h2 class="form-section-title">שעות קבלה</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <select class="form-select" id="office-day" name="office-day"
+                                hx-trigger="change"
+                                hx-post="/update-syllabus"
+                                hx-target="closest .form-wrapper"
+                                hx-swap="outerHTML"
+                                hx-vals='{"updateField": "officeDay"}'>
+                            <option value="א" {{if eq .OfficeDay "א"}}selected{{end}}>א'</option>
+                            <option value="ב" {{if eq .OfficeDay "ב"}}selected{{end}}>ב'</option>
+                            <option value="ג" {{if eq .OfficeDay "ג"}}selected{{end}}>ג'</option>
+                            <option value="ד" {{if eq .OfficeDay "ד"}}selected{{end}}>ד'</option>
+                            <option value="ה" {{if eq .OfficeDay "ה"}}selected{{end}}>ה'</option>
+                            <option value="ו" {{if eq .OfficeDay "ו"}}selected{{end}}>ו'</option>
+                        </select>
+                        <label class="form-label" for="office-day">בחר יום</label>
+                    </div>
+                    <div class="form-group">
+                        <input class="form-input" type="time" id="office-start" name="office-start"
+                               value="{{.OfficeStart}}"
+                               hx-trigger="change"
+                               hx-post="/update-syllabus"
+                               hx-target="closest .form-wrapper"
+                               hx-swap="outerHTML"
+                               hx-vals='{"updateField": "officeStart"}'>
+                        <label class="form-label" for="office-start">שעת התחלה</label>
+                    </div>
+                    <div class="form-group">
+                        <input class="form-input" type="time" id="office-end" name="office-end"
+                               value="{{.OfficeEnd}}"
+                               hx-trigger="change"
+                               hx-post="/update-syllabus"
+                               hx-target="closest .form-wrapper"
+                               hx-swap="outerHTML"
+                               hx-vals='{"updateField": "officeEnd"}'>
+                        <label class="form-label" for="office-end">שעת סיום</label>
+                    </div>
+                </div>
+
+                <h2 class="form-section-title">מחלקה</h2>
+                <div class="form-group">
+                    <select class="form-select" id="lecturer-department" name="lecturer-department"
+                            hx-trigger="change"
+                            hx-post="/update-syllabus"
+                            hx-target="closest .form-wrapper"
+                            hx-swap="outerHTML"
+                            hx-vals='{"updateField": "lecturerDepartment"}'>
+                        <option value="מדעי המחשב" {{if eq .LecturerDepartment "מדעי המחשב"}}selected{{end}}>מדעי המחשב</option>
+                        <option value="מתמטיקה" {{if eq .LecturerDepartment "מתמטיקה"}}selected{{end}}>מתמטיקה</option>
+                        <option value="פיזיקה" {{if eq .LecturerDepartment "פיזיקה"}}selected{{end}}>פיזיקה</option>
+                        <option value="כימיה" {{if eq .LecturerDepartment "כימיה"}}selected{{end}}>כימיה</option>
+                        <option value="ביולוגיה" {{if eq .LecturerDepartment "ביולוגיה"}}selected{{end}}>ביולוגיה</option>
+                    </select>
+                    <label class="form-label" for="lecturer-department">בחר מחלקה</label>
+                </div>
+
+                <h2 class="form-section-title">פרטי קורס כלליים</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <select class="form-select" id="credits" name="credits"
+                                hx-trigger="change"
+                                hx-post="/update-syllabus"
+                                hx-target="closest .form-wrapper"
+                                hx-swap="outerHTML"
+                                hx-vals='{"updateField": "credits"}'>
+                            <option value="" {{if eq .Credits ""}}selected{{end}}></option>
+                            <option value="1" {{if eq .Credits "1"}}selected{{end}}>1</option>
+                            <option value="2" {{if eq .Credits "2"}}selected{{end}}>2</option>
+                            <option value="3" {{if eq .Credits "3"}}selected{{end}}>3</option>
+                        </select>
+                        <label class="form-label" for="credits">נקודות זכות</label>
+                    </div>
+                    <div class="form-group">
+                        <select class="form-select" id="weekly-hours" name="weekly-hours"
+                                hx-trigger="change"
+                                hx-post="/update-syllabus"
+                                hx-target="closest .form-wrapper"
+                                hx-swap="outerHTML"
+                                hx-vals='{"updateField": "weeklyHours"}'>
+                            <option value="" {{if eq .WeeklyHours ""}}selected{{end}}></option>
+                            <option value="1" {{if eq .WeeklyHours "1"}}selected{{end}}>1</option>
+                            <option value="2" {{if eq .WeeklyHours "2"}}selected{{end}}>2</option>
+                            <option value="3" {{if eq .WeeklyHours "3"}}selected{{end}}>3</option>
+                        </select>
+                        <label class="form-label" for="weekly-hours">שעות שבועיות</label>
+                    </div>
+                    <div class="form-group">
+                        <select class="form-select" id="year" name="year"
+                                hx-trigger="change"
+                                hx-post="/update-syllabus"
+                                hx-target="closest .form-wrapper"
+                                hx-swap="outerHTML"
+                                hx-vals='{"updateField": "year"}'>
+                            <option value="" {{if eq .Year ""}}selected{{end}}></option>
+                            <option value="1" {{if eq .Year "1"}}selected{{end}}>שנה א'</option>
+                            <option value="2" {{if eq .Year "2"}}selected{{end}}>שנה ב'</option>
+                            <option value="3" {{if eq .Year "3"}}selected{{end}}>שנה ג'</option>
+                            <option value="4" {{if eq .Year "4"}}selected{{end}}>שנה ד'</option>
+                        </select>
+                        <label class="form-label" for="year">שנה</label>
+                    </div>
+                    <div class="form-group">
+                        <select class="form-select" id="semester" name="semester"
+                                hx-trigger="change"
+                                hx-post="/update-syllabus"
+                                hx-target="closest .form-wrapper"
+                                hx-swap="outerHTML"
+                                hx-vals='{"updateField": "semester"}'>
+                            <option value="" {{if eq .Semester ""}}selected{{end}}></option>
+                            <option value="1" {{if eq .Semester "1"}}selected{{end}}>סמסטר א'</option>
+                            <option value="2" {{if eq .Semester "2"}}selected{{end}}>סמסטר ב'</option>
+                            <option value="קיץ" {{if eq .Semester "קיץ"}}selected{{end}}>סמסטר קיץ</option>
+                        </select>
+                        <label class="form-label" for="semester">סמסטר</label>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <input class="form-input" type="text" id="prerequisites" name="prerequisites"
+                               value="{{.Prerequisites}}"
+                               hx-trigger=" change, blur"
+                               hx-post="/update-syllabus"
+                               hx-target="closest .form-wrapper"
+                               hx-swap="outerHTML"
+                               hx-vals='{"updateField": "prerequisites"}'>
+                        <label class="form-label" for="prerequisites">דרישות קדם</label>
+                    </div>
+                </div>
+
+                <div id="course-structure-container">
+                    <h2 class="form-section-title">מבנה הקורס</h2>
+                    <div class="form-checkbox-group">
+                        <label class="form-checkbox-label">
+                            <input type="checkbox" name="lecture-type" value="lecture"
+                                   {{if contains .CourseStructure "lecture"}}checked{{end}}
+                                   hx-trigger="change"
+                                   hx-post="/update-syllabus"
+                                   hx-target="#course-structure-container"
+                                   hx-swap="outerHTML"
+                                   hx-vals='{"updateField": "courseStructure"}'>
+                            הרצאה
+                        </label>
+                        <label class="form-checkbox-label">
+                            <input type="checkbox" name="lecture-type" value="practice"
+                                   {{if contains .CourseStructure "practice"}}checked{{end}}
+                                   hx-trigger="change"
+                                   hx-post="/update-syllabus"
+                                   hx-target="#course-structure-container"
+                                   hx-swap="outerHTML"
+                                   hx-vals='{"updateField": "courseStructure"}'>
+                            תרגול
+                        </label>
+                        <label class="form-checkbox-label">
+                            <input type="checkbox" name="lecture-type" value="other"
+                                   {{if contains .CourseStructure "other"}}checked{{end}}
+                                   hx-trigger="change"
+                                   hx-post="/update-syllabus"
+                                   hx-target="#course-structure-container"
+                                   hx-swap="outerHTML"
+                                   hx-vals='{"updateField": "courseStructure"}'>
+                            אחר
+                        </label>
+                        <input class="form-input" type="text" name="other-course-structure"
+                               placeholder="פרט"
+                               value="{{.OtherCourseStructure}}"
+                               hx-trigger=" change, blur"
+                               hx-post="/update-syllabus"
+                               hx-target="closest #course-structure-container"
+                               hx-swap="outerHTML"
+                               hx-vals='{"updateField": "otherCourseStructure"}'
+                               style="flex: 1; min-width: 150px; margin-left: 10px;">
+                    </div>
+                </div>
+            </div> <!-- /form-section #lecturer-details -->
+
+            <!-- דרישות הקורס -->
+            <div class="form-section" id="course-requirements">
+                <h2 class="form-section-title">דרישות הקורס</h2>
+                <div class="form-plus-container">
+                    <label class="form-label">הוספת דרישות כנקודות *</label>
+                    <button type="button" class="form-add-btn"
+                            hx-post="/update-syllabus"
+                            hx-trigger="click"
+                            hx-vals='{"action": "addCourseRequirement"}'
+                            hx-include="#course-requirements-list"
+                            hx-target="#course-requirements-list"
+                            hx-swap="outerHTML">+</button>
+                </div>
+                {{template "courseRequirements" .}}
+            </div>
+
+            <!-- תוצרי למידה -->
+            <div class="form-section" id="learning-outcomes">
+                <h2 class="form-section-title">תוצרי למידה</h2>
+                <div class="form-plus-container">
+                    <label class="form-label">הוספת תוצר למידה</label>
+                    <button type="button" class="form-add-btn"
+                            hx-post="/update-syllabus"
+                            hx-trigger="click"
+                            hx-vals='{"action": "addLearningOutcome"}'
+                            hx-include="#learning-outcomes-list"
+                            hx-target="#learning-outcomes-list"
+                            hx-swap="outerHTML">+</button>
+                </div>
+                {{template "learningOutcomes" .}}
+            </div>
+
+            <!-- מטרות הקורס -->
+            <div class="form-section" id="course-objectives">
+                <h2 class="form-section-title">מטרות הקורס</h2>
+                <div class="form-plus-container">
+                    <label class="form-label">הוספת מטרה</label>
+                    <button type="button" class="form-add-btn"
+                            hx-post="/update-syllabus"
+                            hx-trigger="click"
+                            hx-vals='{"action": "addCourseObjective"}'
+                            hx-include="#course-objectives-list"
+                            hx-target="#course-objectives-list"
+                            hx-swap="outerHTML">+</button>
+                </div>
+                {{template "courseObjectives" .}}
+            </div>
+
+            <!-- למידה פעילה -->
+            <div class="form-section" id="active-learning">
+                <h2 class="form-section-title">למידה פעילה</h2>
+                <div class="form-group">
+                    <label class="form-label" for="active-learning-1">
+                        אילו שיטות הוראה לקידום למידה פעילה יבואו לידי ביטוי בקורס על ידי המרצה?
+                    </label>
+                    <input class="form-input" type="text" id="active-learning-1" name="active-learning-1" value="{{.ActiveLearning1}}"
+                           hx-trigger=" change, blur"
+                           hx-post="/update-syllabus"
+                           hx-target="closest .form-wrapper"
+                           hx-swap="outerHTML"
+                           hx-vals='{"updateField": "activeLearning1"}'>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="active-learning-2">
+                        מהם הכלים המתאימים לסטודנטים לצורך יישום למידה עצמאית ופעילה?
+                    </label>
+                    <input class="form-input" type="text" id="active-learning-2" name="active-learning-2" value="{{.ActiveLearning2}}"
+                           hx-trigger=" change, blur"
+                           hx-post="/update-syllabus"
+                           hx-target="closest .form-wrapper"
+                           hx-swap="outerHTML"
+                           hx-vals='{"updateField": "activeLearning2"}'>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="active-learning-3">
+                        כיצד תבוא לידי ביטוי למידה פעילה?
+                    </label>
+                    <input class="form-input" type="text" id="active-learning-3" name="active-learning-3" value="{{.ActiveLearning3}}"
+                           hx-trigger=" change, blur"
+                           hx-post="/update-syllabus"
+                           hx-target="closest .form-wrapper"
+                           hx-swap="outerHTML"
+                           hx-vals='{"updateField": "activeLearning3"}'>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="active-learning-4">
+                        כיצד יווצר מרחב למידה המחייב הדדיות ואינטראקציה בין הסטודנטים?
+                    </label>
+                    <input class="form-input" type="text" id="active-learning-4" name="active-learning-4" value="{{.ActiveLearning4}}"
+                           hx-trigger=" change, blur"
+                           hx-post="/update-syllabus"
+                           hx-target="closest .form-wrapper"
+                           hx-swap="outerHTML"
+                           hx-vals='{"updateField": "activeLearning4"}'>
+                </div>
+            </div>
+
+            <!-- נושאי הקורס -->
+            <div class="form-section" id="course-subjects">
+                <h2 class="form-section-title">נושאי הקורס</h2>
+                <table class="form-syllabus-table" id="syllabus-table">
+                    <thead>
+                    <tr>
+                        <th style="border: none; background: none;"></th>
+                        <th>מספר שיעור</th>
+                        <th>נושאים</th>
+                        <th>נושאי השיעור</th>
+                        <th>פירוט תתי נושאים</th>
+                        <th>לקריאה</th>
+                        <th style="border: none; background: none;"></th>
+                    </tr>
+                    </thead>
+                    {{template "syllabusRows" .}}
+                </table>
+            </div>
+
+            <!-- הרכב הציון -->
+            <div class="form-section" id="grade-composition">
+                <h2 class="form-section-title">הרכב הציון</h2>
+                <div class="form-plus-container">
+                    <label class="form-label">הוספת חלק</label>
+                    <button type="button" class="form-add-btn"
+                            hx-post="/update-syllabus"
+                            hx-trigger="click"
+                            hx-vals='{"action": "addGradeComponent"}'
+                            hx-include="#form-grade-components-list"
+                            hx-target="#form-grade-components-list"
+                            hx-swap="outerHTML">+</button>
+                </div>
+                {{template "gradeComponents" .}}
+            </div>
+
+            <!-- מבנה המטלות -->
+            <div class="form-section" id="assignments-structure">
+                <h2 class="form-section-title">מבנה המטלות</h2>
+                <p>*המחלקה מקפידה על יושרה אקדמית. ...</p>
+                <div class="form-plus-container">
+                    <label class="form-label">הוספת מטלה</label>
+                    <button type="button" class="form-add-btn"
+                            hx-post="/update-syllabus"
+                            hx-trigger="click"
+                            hx-vals='{"action": "addAssignmentStructure"}'
+                            hx-include="#assignments-structure-list"
+                            hx-target="#assignments-structure-list"
+                            hx-swap="outerHTML">+</button>
+                </div>
+                {{template "assignmentsStructure" .}}
+            </div>
+
+            <!-- ביבליוגרפיה -->
+            <div class="form-section" id="bibliography">
+                <h2 class="form-section-title">ביבליוגרפיה</h2>
+
+                <div class="form-plus-container">
+                    <label class="form-label">קריאת חובה</label>
+                    <button type="button" class="form-add-btn"
+                            hx-post="/update-syllabus"
+                            hx-trigger="click"
+                            hx-vals='{"action": "addBibliographyRequired"}'
+                            hx-include="#bibliography-required-list"
+                            hx-target="#bibliography-required-list"
+                            hx-swap="outerHTML">+</button>
+                </div>
+                {{template "bibliographyRequired" .}}
+
+                <div class="form-plus-container">
+                    <label class="form-label">קריאת רשות</label>
+                    <button type="button" class="form-add-btn"
+                            hx-post="/update-syllabus"
+                            hx-trigger="click"
+                            hx-vals='{"action": "addBibliographyRecommended"}'
+                            hx-include="#bibliography-recommended-list"
+                            hx-target="#bibliography-recommended-list"
+                            hx-swap="outerHTML">+</button>
+                </div>
+                {{template "bibliographyRecommended" .}}
+            </div>
+
+            <!-- כפתור שליחה -->
+            <div class="form-section" style="text-align: center;">
+                <button
+                        class="form-submit-btn"
+                        type="submit"
+                        hx-post="/update-syllabus"
+                        hx-target="closest .form-wrapper"
+                        hx-swap="outerHTML">
+                    שלח
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="https://unpkg.com/htmx.org"></script>
+<script>
+    // Toggle the "other" input field for מבנה הקורס
+    document.addEventListener("DOMContentLoaded", function () {
+        const otherCheckbox = document.querySelector('input[name="lecture-type"][value="other"]');
+        const otherInput = document.querySelector('input[name="other-course-structure"]');
+
+        function toggleOtherInput() {
+            if (otherCheckbox && otherInput) {
+                if (otherCheckbox.checked) {
+                    otherInput.disabled = false;
+                } else {
+                    // Clear the input field and trigger the HTMX update before disabling
+                    otherInput.value = '';
+                    otherInput.dispatchEvent(new Event('change')); // Trigger HTMX update
+                    otherInput.disabled = true;
+                }
+            }
+        }
+        if (otherCheckbox) {
+            toggleOtherInput();
+            otherCheckbox.addEventListener("change", toggleOtherInput);
+        }
+    });
+    // Highlight the active (and all above) sidebar links based on scroll
+    const sections = document.querySelectorAll(
+        '#lecturer-details, #course-requirements, #learning-outcomes, #course-objectives, #active-learning, #course-subjects, #grade-composition, #assignments-structure, #bibliography'
+    );
+    const navLi = document.querySelectorAll('.form-sidebar ul li');
+
+    window.addEventListener('scroll', () => {
+        let currentSectionId = "";
+
+        // find which section is in view
+        sections.forEach((section) => {
+            const top = section.offsetTop - 120;
+            const bottom = top + section.offsetHeight;
+            const scrollY = window.pageYOffset;
+
+            // if our scroll is within this section's bounds, mark it as current
+            if (scrollY >= top && scrollY < bottom) {
+                currentSectionId = section.getAttribute("id");
+            }
+        });
+
+        // find the index of the “current” section in the sidebar
+        const currentIndex = [...navLi].findIndex((li) => {
+            const link = li.querySelector('a');
+            return link && link.getAttribute('href') === `#${currentSectionId}`;
+        });
+
+        // remove 'active' from all
+        navLi.forEach(li => li.classList.remove('active'));
+
+        // add 'active' to all items up to currentIndex
+        if (currentIndex !== -1) {
+            for (let i = 0; i <= currentIndex; i++) {
+                navLi[i].classList.add('active');
+            }
+        }
+    });
+</script>
+
+{{end}}
+
+/* ---------------------------
+Partial templates go below
+---------------------------- */
+{{define "courseRequirements"}}
+    <ol id="course-requirements-list">
+        {{range $index, $req := .CourseRequirements}}
+            <li class="form-requirement-item">
+                <input class="form-input" type="text" name="course-requirements[]"
+                       placeholder="דרישה {{$index | add1}}"
+                       value="{{$req}}"
+                       hx-trigger=" change, blur"
+                       hx-post="/update-syllabus"
+                       hx-target="#course-requirements-list"
+                       hx-swap="outerHTML"
+                       hx-vals='{"updateField": "courseRequirements"}'>
+                <button type="button" class="form-add-btn" style="font-size: 20px"
+                        hx-post="/update-syllabus"
+                        hx-trigger="click"
+                        hx-vals='{"action": "removeCourseRequirement", "index": {{$index}}}'
+                        hx-target="#course-requirements-list"
+                        hx-swap="outerHTML">✖
+                </button>
+            </li>
+        {{else}}
+            <li class="form-requirement-item">
+                <input class="form-input" type="text" name="course-requirements[]"
+                       placeholder="דרישה 1"
+                       hx-trigger=" change, blur"
+                       hx-post="/update-syllabus"
+                       hx-target="#course-requirements-list"
+                       hx-swap="outerHTML"
+                       hx-vals='{"updateField": "courseRequirements"}'>
+            </li>
+        {{end}}
+    </ol>
+{{end}}
+
+{{define "learningOutcomes"}}
+    <ol id="learning-outcomes-list">
+        {{range $index, $outcome := .LearningOutcomes}}
+            <li class="form-requirement-item">
+                <input class="form-input" type="text" name="learning-outcomes[]"
+                       placeholder="תוצר למידה {{$index | add1}}"
+                       value="{{$outcome}}"
+                       hx-trigger=" change, blur"
+                       hx-post="/update-syllabus"
+                       hx-target="#learning-outcomes-list"
+                       hx-swap="outerHTML"
+                       hx-vals='{"updateField": "learningOutcomes"}'>
+                <button type="button" class="form-add-btn" style="font-size: 20px"
+                        hx-post="/update-syllabus"
+                        hx-trigger="click"
+                        hx-vals='{"action": "removeLearningOutcome", "index": {{$index}}}'
+                        hx-target="#learning-outcomes-list"
+                        hx-swap="outerHTML">✖
+                </button>
+            </li>
+        {{else}}
+            <li class="form-requirement-item">
+                <input class="form-input" type="text" name="learning-outcomes[]"
+                       placeholder="תוצר למידה 1"
+                       hx-trigger="change, blur"
+                       hx-post="/update-syllabus"
+                       hx-target="#learning-outcomes-list"
+                       hx-swap="outerHTML"
+                       hx-vals='{"updateField": "learningOutcomes"}'>
+            </li>
+        {{end}}
+    </ol>
+{{end}}
+
+{{define "courseObjectives"}}
+    <ol id="course-objectives-list">
+        {{range $index, $objective := .CourseObjectives}}
+            <li class="form-requirement-item">
+                <input class="form-input" type="text" name="course-objectives[]"
+                       placeholder="מטרה {{$index | add1}}"
+                       value="{{$objective}}"
+                       hx-trigger=" change, blur"
+                       hx-post="/update-syllabus"
+                       hx-target="#course-objectives-list"
+                       hx-swap="outerHTML"
+                       hx-vals='{"updateField": "courseObjectives"}'>
+                <button type="button" class="form-add-btn" style="font-size: 20px"
+                        hx-post="/update-syllabus"
+                        hx-trigger="click"
+                        hx-vals='{"action": "removeCourseObjective", "index": {{$index}}}'
+                        hx-target="#course-objectives-list"
+                        hx-swap="outerHTML">✖
+                </button>
+            </li>
+        {{else}}
+            <li class="form-requirement-item">
+                <input class="form-input" type="text" name="course-objectives[]"
+                       placeholder="מטרה 1"
+                       hx-trigger=" change, blur"
+                       hx-post="/update-syllabus"
+                       hx-target="#course-objectives-list"
+                       hx-swap="outerHTML"
+                       hx-vals='{"updateField": "courseObjectives"}'>
+            </li>
+        {{end}}
+    </ol>
+{{end}}
+
+{{define "syllabusRows"}}
+    <tbody>
+    {{range $index, $row := .SyllabusRows}}
+        <tr>
+            <td style="border: none; background: none;">
+                <button type="button" class="form-add-btn" style="font-size: 20px"
+                        hx-post="/update-syllabus"
+                        hx-trigger="click"
+                        hx-vals='{"action": "insertSyllabusRow", "index": {{$index}}}'
+                        hx-include="closest form"
+                        hx-target="#syllabus-table tbody"
+                        hx-swap="outerHTML">+
+                </button>
+            </td>
+            <td>
+                <input type="text" name="lesson-number[]" class="form-input"
+                       value="{{$row.LessonNumber}}" placeholder="{{add1 $index}}"
+                       hx-trigger=" change, blur">
+            </td>
+            <td>
+                <input type="text" name="main-topic[]" class="form-input"
+                       value="{{$row.MainTopic}}" placeholder="הזן נושא"
+                       hx-trigger=" change, blur">
+            </td>
+            <td>
+                <input type="text" name="lesson-topics[]" class="form-input"
+                       value="{{$row.LessonTopics}}" placeholder="הזן נושא שיעור"
+                       hx-trigger=" change, blur">
+            </td>
+            <td>
+                <input type="text" name="subtopics[]" class="form-input"
+                       value="{{$row.Subtopics}}" placeholder="הזן פירוט"
+                       hx-trigger=" change, blur">
+            </td>
+            <td>
+                <input type="text" name="reading-material[]" class="form-input"
+                       value="{{$row.ReadingMaterial}}" placeholder="קישור/מידע לקריאה"
+                       hx-trigger=" change, blur">
+            </td>
+            <td style="border: none; background: none;">
+                <button type="button" class="form-add-btn" style="font-size: 20px"
+                        hx-post="/update-syllabus"
+                        hx-trigger="click"
+                        hx-vals='{"action": "removeSyllabusRow", "index": {{$index}}}'
+                        hx-target="#syllabus-table tbody"
+                        hx-swap="outerHTML">✖
+                </button>
+            </td>
+        </tr>
+    {{end}}
+    </tbody>
+{{end}}
+
+{{define "gradeComponents"}}
+    <ol id="form-grade-components-list">
+        {{range $index, $comp := .GradeComponents}}
+            <li class="form-grade-item">
+                <input class="form-input" type="text" name="grade-component-name[]" placeholder="חלק ציון"
+                       value="{{$comp.PartName}}"
+                       hx-trigger=" change, blur"
+                       hx-post="/update-syllabus"
+                       hx-target="#form-grade-components-list"
+                       hx-swap="outerHTML"
+                       hx-vals='{"updateField": "gradeComponents"}'>
+                <input class="form-input" type="text" name="grade-component-percentage[]" placeholder="אחוז"
+                       value="{{$comp.Percentage}}"
+                       hx-trigger=" change, blur"
+                       hx-post="/update-syllabus"
+                       hx-target="#form-grade-components-list"
+                       hx-swap="outerHTML"
+                       hx-vals='{"updateField": "gradeComponents"}'>%
+                <button type="button" class="form-add-btn" style="font-size: 20px"
+                        hx-post="/update-syllabus"
+                        hx-trigger="click"
+                        hx-vals='{"action": "removeGradeComponent", "index": {{$index}}}'
+                        hx-target="#form-grade-components-list"
+                        hx-swap="outerHTML">✖
+                </button>
+            </li>
+        {{else}}
+            <li class="form-grade-item">
+                <input class="form-input" type="text" name="grade-component-name[]" placeholder="חלק ציון"
+                       hx-trigger=" change, blur"
+                       hx-post="/update-syllabus"
+                       hx-target="#form-grade-components-list"
+                       hx-swap="outerHTML"
+                       hx-vals='{"updateField": "gradeComponents"}'>
+                <input class="form-input" type="text" name="grade-component-percentage[]" placeholder="אחוז"
+                       hx-trigger=" change, blur"
+                       hx-post="/update-syllabus"
+                       hx-target="#form-grade-components-list"
+                       hx-swap="outerHTML"
+                       hx-vals='{"updateField": "gradeComponents"}'>%
+            </li>
+        {{end}}
+    </ol>
+{{end}}
+
+{{define "assignmentsStructure"}}
+    <ol id="assignments-structure-list">
+        {{range $index, $item := .AssignmentsStructure}}
+            <li class="form-requirement-item">
+                <input class="form-input" type="text" name="assignments-structure[]"
+                       placeholder="מטלה {{$index | add1}}"
+                       value="{{$item}}"
+                       hx-trigger=" change, blur"
+                       hx-post="/update-syllabus"
+                       hx-target="#assignments-structure-list"
+                       hx-swap="outerHTML"
+                       hx-vals='{"updateField": "assignmentsStructure"}'>
+                <button type="button" class="form-add-btn" style="font-size: 20px"
+                        hx-post="/update-syllabus"
+                        hx-trigger="click"
+                        hx-vals='{"action": "removeAssignmentStructure", "index": {{$index}}}'
+                        hx-target="#assignments-structure-list"
+                        hx-swap="outerHTML">✖
+                </button>
+            </li>
+        {{else}}
+            <li class="form-requirement-item">
+                <input class="form-input" type="text" name="assignments-structure[]"
+                       placeholder="מטלה 1"
+                       hx-trigger=" change, blur"
+                       hx-post="/update-syllabus"
+                       hx-target="#assignments-structure-list"
+                       hx-swap="outerHTML"
+                       hx-vals='{"updateField": "assignmentsStructure"}'>
+            </li>
+        {{end}}
+    </ol>
+{{end}}
+
+{{define "bibliographyRequired"}}
+    <ol id="bibliography-required-list">
+        {{range $index, $item := .BibliographyRequired}}
+            <li class="form-requirement-item">
+                <input class="form-input"
+                       type="text"
+                       name="bibliography-required[]"
+                       placeholder="מקור {{$index | add1}}"
+                       value="{{$item}}"
+                       hx-trigger="change, blur"
+                       hx-post="/update-syllabus"
+                       hx-target="#bibliography-required-list"
+                       hx-swap="outerHTML"
+                       hx-vals='{"updateField": "bibliographyRequired"}'>
+
+                <button type="button" class="form-add-btn" style="font-size: 20px"
+                        hx-post="/update-syllabus"
+                        hx-trigger="click"
+                        hx-vals='{"action": "removeBibliographyRequired", "index": {{$index}}}'
+                        hx-target="#bibliography-required-list"
+                        hx-swap="outerHTML">✖
+                </button>
+            </li>
+        {{else}}
+            <li class="form-requirement-item">
+                <input class="form-input"
+                       type="text"
+                       name="bibliography-required[]"
+                       placeholder="מקור 1"
+                       hx-trigger="change, blur"
+                       hx-post="/update-syllabus"
+                       hx-target="#bibliography-required-list"
+                       hx-swap="outerHTML"
+                       hx-vals='{"updateField": "bibliographyRequired"}'>
+            </li>
+        {{end}}
+    </ol>
+{{end}}
+
+{{define "bibliographyRecommended"}}
+    <ol id="bibliography-recommended-list">
+        {{range $index, $item := .BibliographyRecommended}}
+            <li class="form-requirement-item">
+                <input class="form-input"
+                       type="text"
+                       name="bibliography-recommended[]"
+                       placeholder="מקור {{$index | add1}}"
+                       value="{{$item}}"
+                       hx-trigger="change, blur"
+                       hx-post="/update-syllabus"
+                       hx-target="#bibliography-recommended-list"
+                       hx-swap="outerHTML"
+                       hx-vals='{"updateField": "bibliographyRecommended"}'>
+
+                <button type="button" class="form-add-btn" style="font-size: 20px"
+                        hx-post="/update-syllabus"
+                        hx-trigger="click"
+                        hx-vals='{"action": "removeBibliographyRecommended", "index": {{$index}}}'
+                        hx-target="#bibliography-recommended-list"
+                        hx-swap="outerHTML">✖
+                </button>
+            </li>
+        {{else}}
+            <li class="form-requirement-item">
+                <input class="form-input"
+                       type="text"
+                       name="bibliography-recommended[]"
+                       placeholder="מקור 1"
+                       hx-trigger="change, blur"
+                       hx-post="/update-syllabus"
+                       hx-target="#bibliography-recommended-list"
+                       hx-swap="outerHTML"
+                       hx-vals='{"updateField": "bibliographyRecommended"}'>
+            </li>
+        {{end}}
+    </ol>
+{{end}}

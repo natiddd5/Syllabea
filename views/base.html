@@ -1,0 +1,55 @@
+{{ define "base" }}
+    <!DOCTYPE html>
+    <html lang="he">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{{ .Header.Title }}</title>
+
+        <!-- Material symbols -->
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+
+        <!-- Rubik font -->
+        <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+        <!-- Main stylesheet -->
+        <link rel="stylesheet" href="/static/styles.css">
+        <!-- add  HTMX -->
+        <script src="https://unpkg.com/htmx.org"></script>
+
+    </head>
+    <body>
+    <header class="top-navbar">
+        <nav class="top-nav">
+            <div class="top-nav-right">
+                <a class="top-nav-button" class = "no-underline" href="/">
+                    <span class="material-symbols-outlined">home</span>
+                </a>
+                <div class="top-nav-separator"></div>
+                <button class="top-nav-button">
+                    <span class="material-symbols-outlined">account_circle</span>
+                </button>
+                <span class="top-nav-text">שלום, {{ .Header.Name }}</span>
+                <div class="top-nav-separator"></div>
+                <button class="top-nav-button">
+                    <span class="material-symbols-outlined">notifications</span>
+                </button>
+                <span class="top-nav-text">התראות</span>
+            </div>
+            <div class="top-nav-left">
+                <button class="top-nav-button">
+                    <span class="material-symbols-outlined">help</span>
+                </button>
+                <div class="top-nav-separator"></div>
+                <button class="top-nav-button">
+                    <span class="material-symbols-outlined">settings</span>
+                </button>
+            </div>
+        </nav>
+    </header>
+    {{ template "courses-page" . }}
+    </body>
+    </html>
+
+
+{{ end }}

@@ -1,0 +1,121 @@
+{{ define "courses-page" }}
+    <main class="main-layout">
+        <aside class="sidebar">
+            <button class="sidebar-button"
+                    hx-get="/create-syllabus"
+                    hx-target=".main-layout"
+                    hx-swap="outerHTML">
+                סילבוס חדש
+                <span class="material-symbols-outlined">add</span>
+            </button>
+
+            <div class="outer-sidebar-menu">
+                <ul class="sidebar-menu">
+                    <li class="sidebar-item">סילבוסים כלליים</li>
+                    <li class="sidebar-item">ארכיון</li>
+                    <li class="sidebar-item">פח אשפה</li>
+                </ul>
+            </div>
+        </aside>
+        <div class="main-container">
+            <section class="content">
+                <div class="statistics-section">
+                    <div class="statistics">
+                        <h3>הסילבוסים שלך</h3>
+                        <div class="stat-separator"></div>
+                        <div class="stat-item">
+                            <span class="stat-number">{{ .Content.Total }}</span>
+                            <span class="stat-label">סה"כ</span>
+                        </div>
+                        <div class="stat-separator"></div>
+                        <div class="stat-item">
+                            <span class="stat-number">{{ .Content.Attempts }}</span>
+                            <span class="stat-label">נסיון</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">{{ .Content.InReview }}</span>
+                            <span class="stat-label">בבחינה</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">{{ .Content.Approved }}</span>
+                            <span class="stat-label">מאושר</span>
+                        </div>
+                    </div>
+                </div>
+                <section class="filters-section">
+                    <form class="filter-container" method="post" hx-post="/filter" hx-target=".outer-container" hx-swap="outerHTML">
+                        <input type="text" class="search-bar" placeholder="חפש" name="search">
+
+                        <!-- Dropdown Trigger -->
+                        <div class="filter-dropdown">
+                            <!-- Icon that toggles dropdown on click -->
+                            <span class="material-symbols-outlined filter-alt-icon" onclick="toggleFilterDropdown()">
+                filter_alt
+            </span>
+
+                            <!-- The actual dropdown menu -->
+                            <div id="filter-dropdown-content" class="dropdown-content">
+                                <label class="dropdown-item">
+                                    <input type="checkbox" name="status" value="סילבוס">
+                                    סילבוס
+                                </label>
+                                <label class="dropdown-item">
+                                    <input type="checkbox" name="status" value="בבחינה">
+                                    בבחינה
+                                </label>
+                                <label class="dropdown-item">
+                                    <input type="checkbox" name="status" value="מאושר">
+                                    מאושר
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="date-filter">
+                            <label for="from-date"> מתאריך: </label>
+                            <input type="date" id="from-date" class="date-input" name="from-date">
+                            <label for="to-date">עד תאריך: </label>
+                            <input type="date" id="to-date" class="date-input" name="to-date">
+                        </div>
+                        <button type="submit" class="filter-button">סנן</button>
+                    </form>
+                </section>
+
+            </section>
+            <div class="outer-container">
+                <div class="headers">
+                    <div class="header-column">שם הסילבוס</div>
+                    <div class="header-column">המרצה</div>
+                    <div class="header-column">התחום</div>
+                    <div class="header-column">סטטוס</div>
+                    <div class="header-column">הערות</div>
+                    <div class="header-column"></div>
+                </div>
+                <div class="divider"></div>
+                {{ range .Content.DateSections }}
+                    {{ template "date-section.html" . }}
+                {{ end }}
+            </div>
+        </div>
+    </main>
+    <script>
+        function toggleFilterDropdown() {
+            const dropdown = document.getElementById("filter-dropdown-content");
+            dropdown.classList.toggle("show");
+        }
+
+        // (Optional) Close the dropdown if the user clicks outside of it
+        document.addEventListener("click", function (event) {
+            const dropdown = document.getElementById("filter-dropdown-content");
+            const icon = document.querySelector(".filter-alt-icon");
+
+            // If user clicks outside the icon and outside the dropdown content
+            if (
+                dropdown.classList.contains("show") &&
+                !dropdown.contains(event.target) &&
+                event.target !== icon
+            ) {
+                dropdown.classList.remove("show");
+            }
+        });
+    </script>
+{{ end }}

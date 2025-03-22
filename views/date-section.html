@@ -1,0 +1,8 @@
+{{ define "date-section.html" }}
+    <div class="date-section">
+        <h3>{{ .DateLabel }}</h3>
+        {{ range .Cards }}
+            {{ template "card.html" . }}
+        {{ end }}
+    </div>
+{{ end }}

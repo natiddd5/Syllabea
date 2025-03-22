@@ -1,0 +1,15 @@
+{{ define "outer-container.html" }}
+    <div class="outer-container">
+        <div class="headers">
+            <div class="header-column">שם הסילבוס</div>
+            <div class="header-column">המרצה</div>
+            <div class="header-column">התחום</div>
+            <div class="header-column">סטטוס</div>
+            <div class="header-column">הערות</div>
+        </div>
+        <div class="divider"></div>
+        {{ range . }}
+            {{ template "date-section.html" . }}
+        {{ end }}
+    </div>
+{{ end }}

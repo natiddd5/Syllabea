@@ -1,0 +1,590 @@
+/* -------------------------------------------------------------------------
+   Global Reset & Base
+--------------------------------------------------------------------------- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Rubik', sans-serif;
+    background-color: #f5f5f5;
+    direction: rtl;
+    text-align: right;
+    /*
+      If top navbar is fixed and has a known height (e.g., 50px or 60px),
+      you can push the body down to avoid overlap. Adjust as needed.
+    */
+    margin-top: 60px;
+}
+
+.material-symbols-outlined {
+    font-size: 20px;
+    color: #d0d0d0;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.material-symbols-outlined:hover {
+    color: #8d8d8d;
+}
+
+/* -------------------------------------------------------------------------
+   Top Navbar
+--------------------------------------------------------------------------- */
+.top-navbar {
+    background-color: #666;
+    color: white;
+    padding: 5px 15px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+    /* Make it fixed at the top so the sidebar can sit under it on small screens */
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 999;
+}
+
+.top-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.top-nav-right, .top-nav-left {
+    display: flex;
+    align-items: center;
+}
+
+.top-nav-right > .top-nav-button,
+.top-nav-left > .top-nav-button {
+    margin-right: 10px;
+}
+
+.top-nav-separator {
+    height: 24px;
+    width: 1px;
+    background-color: #d0d0d0;
+    margin: 0 10px;
+}
+
+.top-nav-button {
+    background: transparent;
+    border: none;
+    padding: 2px 5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 4px;
+}
+
+.top-nav-button:hover .material-symbols-outlined {
+    color: #ffffff;
+}
+
+.top-nav-button:hover .top-nav-text {
+    color: #d0d0d0;
+}
+
+.top-nav-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: #d0d0d0;
+}
+
+/* -------------------------------------------------------------------------
+   Sidebar
+--------------------------------------------------------------------------- */
+.sidebar {
+    width: 240px;
+    height: 100vh;
+    padding: 20px;
+    margin-right: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    /*
+      Since the navbar is fixed, you can add top spacing if desired:
+      margin-top: 60px;
+      (But you might not need it if you're offsetting via body { margin-top: ... } )
+    */
+}
+
+.sidebar-button {
+    background-color: #617CFF;
+    min-width: 150px;
+    color: white;
+    font-size: 16px;
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    text-align: center;
+    transition: background-color 0.05s ease;
+}
+
+.sidebar-button .material-symbols-outlined {
+    font-size: 22px;
+    color: white;
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.sidebar-button:hover {
+    background-color: #5871e8;
+}
+
+.outer-sidebar-menu {
+    padding: 10px;
+    background: white;
+    cursor: pointer;
+}
+
+.sidebar-menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    color: #d0d0d0;
+}
+
+.sidebar-item {
+    color: #666666;
+    font-size: 16px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.1s ease;
+    border: none;
+}
+
+.sidebar-item + .sidebar-item {
+    margin-top: 2px;
+    border-top: 1px solid #D0D0D0;
+}
+
+.sidebar-item:hover {
+    color: #292929;
+}
+
+/* -------------------------------------------------------------------------
+   Main Layout
+--------------------------------------------------------------------------- */
+.main-layout {
+    display: flex;
+    margin-top: 20px;
+    gap: 20px;
+}
+
+.main-container {
+    width: 100%;
+    display: block;
+    margin-top: 20px;
+    margin-left: 150px;
+    margin-right: 50px;
+}
+
+.main-container section {
+    margin-bottom: 20px;
+}
+
+/* -------------------------------------------------------------------------
+   Content & Statistics
+--------------------------------------------------------------------------- */
+.content {
+    width: 50%;
+    flex: 1;
+    padding: 20px;
+}
+
+.statistics-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    width: 100%;
+    padding: 10px;
+    color: #666666;
+    box-sizing: border-box;
+}
+
+.statistics {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    white-space: nowrap;
+    width: auto;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    max-width: 120px;
+    flex-shrink: 0;
+}
+
+.stat-number {
+    font-size: 24px;
+    font-weight: bold;
+    color: #666666;
+    transition: font-size 0.2s ease-in-out;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: #666666;
+}
+
+.stat-separator {
+    width: 1px;
+    height: 40px;
+    background-color: #d0d0d0;
+    align-self: stretch;
+}
+
+/* -------------------------------------------------------------------------
+   Filters
+--------------------------------------------------------------------------- */
+.filter-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+
+}
+
+.search-bar {
+    width: 200px;
+    font-size: 16px;
+    padding: 5px 0;           /* Adjust vertical padding */
+    /* Remove all borders except bottom */
+    border: none;
+    border-bottom: 2px solid #ccc; /* Or whatever color or thickness you want */
+
+    background-color: transparent;
+    outline: none;
+}
+
+
+.filter-container .top-nav-button .material-symbols-outlined {
+    font-size: 22px;
+    color: #555555;
+    transition: color 0.2s ease;
+}
+
+.filter-container .top-nav-button:hover {
+    background-color: #e0e0e0;
+}
+
+.date-filter {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.date-input {
+    width: 200px;
+    font-size: 16px;
+    padding: 5px 0;           /* Adjust vertical padding */
+    /* Remove all borders except bottom */
+    border: none;
+    border-bottom: 2px solid #ccc; /* Or whatever color or thickness you want */
+
+    background-color: transparent;
+    outline: none;
+    color: rgba(0, 0, 0, 0.2); /* 20% opacity text */
+}
+
+
+.filter-button {
+    background-color: #617CFF;
+    color: white;
+    font-size: 16px;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.filter-button:hover {
+    background-color: #5871e8;
+}
+
+/* 1) The dropdown container remains the same */
+.filter-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+/* 2) Let the width auto-adjust so the box ends soon after the longest text */
+.dropdown-content {
+    display: none;
+    position: absolute;
+    top: 20px;
+    right: -45px;               /* adjust if you want the whole box moved left/right */
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    width: auto;                /* let content define the width */
+    padding: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 999;
+}
+
+/* Shows the dropdown when `.show` is toggled */
+.dropdown-content.show {
+    display: block;
+}
+
+/* 3) The item row: align right for RTL and space out elements */
+.dropdown-item {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;  /* text on right, checkbox on the left */
+    margin-bottom: 10px;
+}
+.dropdown-item:last-child {
+    margin-bottom: 0;
+}
+
+/* 4) Increase the gap between checkbox and text */
+.dropdown-item input[type="checkbox"] {
+    margin-left: 10px;          /* space between label text and checkbox */
+    transform: scale(1.2);      /* optional, enlarge checkbox if desired */
+}
+
+
+/* Icon style (optional) */
+.filter-alt-icon {
+    cursor: pointer;
+    font-size: 24px;
+    vertical-align: middle;
+}
+
+/* -------------------------------------------------------------------------
+   Outer Container & Date Sections
+--------------------------------------------------------------------------- */
+.outer-container {
+    padding: 15px;
+}
+
+.date-section {
+    display: flow-root;
+    margin-bottom: 30px;
+}
+
+.headers {
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr;
+    padding: 10px;
+    font-weight: bold;
+    color: #555;
+}
+
+.header-column {
+    text-align: center;
+    font-size: 14px;
+}
+
+.divider {
+    border-bottom: 2px solid #e0e0e0;
+    margin-bottom: 15px;
+}
+
+.date-header {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    margin: 20px 0 10px;
+}
+
+/* -------------------------------------------------------------------------
+   Cards
+--------------------------------------------------------------------------- */
+.cards-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    color: #666666;
+}
+
+.card {
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr;
+    align-items: center;
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    border-right-width: 10px;
+    gap: 10px;
+    position: relative;
+    transition: box-shadow 0.2s ease, border-right-color 0.2s ease;
+    margin: 5px;
+}
+
+.card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card.approved {
+    border-right-color: #0f7b0f;
+}
+
+.card.in-progress {
+    border-right-color: #ffcc00;
+}
+
+.card.failed {
+    border-right-color: #d9534f;
+}
+
+/* Status Column */
+.status-column {
+    text-align: center;
+    font-weight: bold;
+    padding: 5px 10px;
+    font-size: 14px;
+    white-space: nowrap;
+    border-radius: 8px;
+    background-color: #d1f5d3;
+    color: #0f7b0f;
+}
+
+.status-column.in-progress {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.status-column.failed {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+/* Icons Column */
+.icons-column {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.card:hover .icons-column {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.icons-column .notes-icon {
+    display: flex;
+    gap: 0;
+    flex-grow: 1;
+    justify-content: space-evenly;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.icons-column:hover .notes-icon {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* -------------------------------------------------------------------------
+   Responsive Adjustments
+--------------------------------------------------------------------------- */
+@media screen and (max-width: 800px) {
+    /*
+       1) The sidebar becomes horizontal (row)
+          and full width below the fixed navbar.
+    */
+    .sidebar {
+        width: 100%;
+        height: auto;
+        padding: 10px;
+        margin-right: 0;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .sidebar-item {
+        flex: 1 1 auto;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 5px 0;
+    }
+    .sidebar-button{
+        height: 70px;
+    }
+
+    .sidebar-item + .sidebar-item {
+        border-top: none;
+    }
+    .sidebar-item:not(:last-child) {
+        border-left: 1px solid #D0D0D0;
+        padding-left: 15px; /* Add spacing so text does not touch the border */
+    }
+
+
+    .sidebar-menu{
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+    }
+
+    /*
+      2) The main layout stacks vertically, removing big margins
+         so everything is more compact.
+    */
+    .main-layout {
+        flex-direction: column;
+        margin-top: 10px;
+        gap: 10px; /* tighten spacing between blocks */
+    }
+
+    .main-container {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    /*
+      3) Tighter spacing for content, stats, and filters on small screens.
+    */
+    .content,
+    .statistics-section,
+    .filter-container {
+        padding: 10px;
+        gap: 10px;
+    }
+
+
+
+    .stat-item {
+        max-width: 80px; /* narrower stat cards */
+    }
+    .stat-number {
+        font-size: 18px;
+    }
+    .stat-label {
+        font-size: 12px;
+    }
+}
