@@ -21,7 +21,10 @@ type Draft struct {
 	OfficeDay               string           `json:"officeDay"`
 	OfficeStart             string           `json:"officeStart"`
 	OfficeEnd               string           `json:"officeEnd"`
-	LecturerDepartment      string           `json:"lecturerDepartment"`
+	SyllabusDepartment      string           `json:"syllabusDepartment"` // Selected department
+	Departments             []string         `json:"departments"`
+	SelectedCourse          string           `json:"selectedCourse"` // Selected course
+	Courses                 []string         `json:"courses"`        // List of available courses
 	CourseRequirements      []string         `json:"courseRequirements"`
 	LearningOutcomes        []string         `json:"learningOutcomes"`
 	CourseObjectives        []string         `json:"courseObjectives"`

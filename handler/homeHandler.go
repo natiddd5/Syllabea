@@ -325,6 +325,21 @@ func RegisterRoutes(e *echo.Echo, repo *repository.Repository) {
 		userID, _ := mid.GetUserID(c)
 		user, _ := repo.GetUserByID(userID)
 		draft := GetUserDraft(user)
+
+		// Populate the dynamic list of departments.
+		draft.Departments = []string{
+			"מדעי המחשב",
+			"מדעי החיים",
+			"מדעי המדינה",
+			// add more departments as needed...
+		}
+		draft.Courses = []string{
+			"מבוא למדעי המחשב",
+			"תכנות בסיסי",
+			"אלגוריתמים",
+			"מערכות הפעלה",
+		}
+
 		return c.Render(http.StatusOK, "create-syllabus", draft)
 	})
 
@@ -381,6 +396,10 @@ func updateSyllabusHandler(c echo.Context) error {
 func handleGeneralUpdate(c echo.Context, draft *UIcomponents.Draft) error {
 	updateField := c.FormValue("updateField")
 	switch updateField {
+	case "syllabus-department":
+		draft.SyllabusDepartment = c.FormValue("syllabus-department")
+		return c.Render(http.StatusOK, "syllabusDepartment", draft)
+
 	case "bibliographyRequired":
 		if err := c.Request().ParseForm(); err == nil {
 			draft.BibliographyRequired = c.Request().Form["bibliography-required[]"]
@@ -391,6 +410,9 @@ func handleGeneralUpdate(c echo.Context, draft *UIcomponents.Draft) error {
 			draft.BibliographyRecommended = c.Request().Form["bibliography-recommended[]"]
 		}
 		return c.Render(http.StatusOK, "bibliographyRecommended", draft)
+	case "course-dropdown":
+		draft.SelectedCourse = c.FormValue("course-dropdown")
+		return c.Render(http.StatusOK, "coursesDropdown", draft)
 	case "LecturerName":
 		draft.LecturerName = c.FormValue("LecturerName")
 	case "LecturerEmail":

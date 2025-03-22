@@ -415,22 +415,9 @@
                 </div>
 
                 <h2 class="form-section-title">מחלקה</h2>
-                <div class="form-group">
-                    <select class="form-select" id="lecturer-department" name="lecturer-department"
-                            hx-trigger="change"
-                            hx-post="/update-syllabus"
-                            hx-target="closest .form-wrapper"
-                            hx-swap="outerHTML"
-                            hx-vals='{"updateField": "lecturerDepartment"}'>
-                        <option value="מדעי המחשב" {{if eq .LecturerDepartment "מדעי המחשב"}}selected{{end}}>מדעי המחשב</option>
-                        <option value="מתמטיקה" {{if eq .LecturerDepartment "מתמטיקה"}}selected{{end}}>מתמטיקה</option>
-                        <option value="פיזיקה" {{if eq .LecturerDepartment "פיזיקה"}}selected{{end}}>פיזיקה</option>
-                        <option value="כימיה" {{if eq .LecturerDepartment "כימיה"}}selected{{end}}>כימיה</option>
-                        <option value="ביולוגיה" {{if eq .LecturerDepartment "ביולוגיה"}}selected{{end}}>ביולוגיה</option>
-                    </select>
-                    <label class="form-label" for="lecturer-department">בחר מחלקה</label>
-                </div>
-
+                {{template "syllabusDepartment" .}}
+                <h2 class="form-section-title">שם קורס</h2>
+                {{template "coursesDropdown" .}}
                 <h2 class="form-section-title">פרטי קורס כלליים</h2>
                 <div class="form-row">
                     <div class="form-group">
@@ -1121,4 +1108,37 @@ Partial templates go below
             </li>
         {{end}}
     </ol>
+{{end}}
+
+
+{{define "syllabusDepartment"}}
+    <div class="form-group">
+        <select class="form-select" id="syllabus-department" name="syllabus-department"
+                hx-trigger="change"
+                hx-post="/update-syllabus"
+                hx-target="closest .form-group"
+                hx-swap="outerHTML"
+                hx-vals='{"updateField": "syllabus-department"}'>
+            {{range $dept := .Departments}}
+                <option value="{{$dept}}" {{if eq $dept $.SyllabusDepartment}}selected{{end}}>{{$dept}}</option>
+            {{end}}
+        </select>
+        <label class="form-label" for="syllabus-department">בחר מחלקת סילבוס</label>
+    </div>
+{{end}}
+
+{{define "coursesDropdown"}}
+    <div class="form-group">
+        <select class="form-select" id="course-dropdown" name="course-dropdown"
+                hx-trigger="change"
+                hx-post="/update-syllabus"
+                hx-target="closest .form-group"
+                hx-swap="outerHTML"
+                hx-vals='{"updateField": "course-dropdown"}'>
+            {{range $course := .Courses}}
+                <option value="{{$course}}" {{if eq $course $.SelectedCourse}}selected{{end}}>{{$course}}</option>
+            {{end}}
+        </select>
+        <label class="form-label" for="course-dropdown">בחר קורס</label>
+    </div>
 {{end}}
