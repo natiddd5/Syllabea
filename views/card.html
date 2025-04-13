@@ -1,15 +1,41 @@
 {{ define "card.html" }}
-    <div class="card {{ .StatusLabel }}">
+    <style>
+        /* Fade‑in animation for the card */
+        .card {
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+        }
+        @keyframes fadeIn { to { opacity: 1; } }
+    </style>
+
+    {{/* Map server value → CSS‑class keyword */}}
+    {{- $cls := "" -}}
+    {{- if eq .StatusLabel "Draft"       }}{{ $cls = "draft"      }}{{ end -}}
+    {{- if eq .StatusLabel "In Review"   }}{{ $cls = "in-review"  }}{{ end -}}
+    {{- if eq .StatusLabel "Approved"    }}{{ $cls = "approved"   }}{{ end -}}
+
+    <div class="card {{ $cls }}">
         <div class="info-column">
             <div class="info-title">{{ .Title }}</div>
             <div class="info-date">{{ .Date }}</div>
         </div>
         <div class="info-column">{{ .Lecturer }}</div>
         <div class="info-column">{{ .Field }}</div>
-        <div class="status-column {{ .StatusLabel }}">{{ .StatusLabel }}</div>
+
+        {{/* Hebrew display label */}}
+        <div class="status-column {{ $cls }}">
+            {{- if eq .StatusLabel "Draft"     }}טיוטא
+            {{- else if eq .StatusLabel "In Review" }}בתהליך
+            {{- else if eq .StatusLabel "Approved"  }}מאושר
+            {{- end }}
+        </div>
+
         <div class="icons-column">
             <div class="notes-icon">
-                <span class="material-symbols-outlined">edit</span>
+                <span class="material-symbols-outlined"
+                      hx-get="/edit-syllabus/{{ .ID }}"
+                      hx-target=".main-layout"
+                      hx-swap="outerHTML">edit</span>
                 <span class="material-symbols-outlined">delete</span>
                 <span class="material-symbols-outlined">visibility</span>
                 <span class="material-symbols-outlined">print</span>

@@ -4,7 +4,6 @@ go 1.23.2
 
 require (
 	github.com/go-sql-driver/mysql v1.9.0
-	github.com/golang-jwt/jwt/v4 v4.5.1
 	github.com/gorilla/sessions v1.4.0
 	github.com/labstack/echo-contrib v0.17.2
 	github.com/labstack/echo/v4 v4.13.3

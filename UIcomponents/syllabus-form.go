@@ -15,7 +15,14 @@ type GradeComponent struct {
 	Percentage string
 }
 
+type Comments struct {
+	Name    string
+	Message string
+	Time    string
+}
+
 type Draft struct {
+	ID                      int              `json:"ID"`
 	LecturerName            string           `json:"lecturerName"`
 	LecturerEmail           string           `json:"lecturerEmail"`
 	OfficeDay               string           `json:"officeDay"`

@@ -41,7 +41,6 @@ func (r *Repository) CreateUser(u *types.User) error {
 	return nil
 }
 
-// GetUserByID retrieves a user by ID.
 func (r *Repository) GetUserByID(id int) (*types.User, error) {
 	query := `SELECT id, name, email, role, created_at FROM users WHERE id = ?`
 	u := &types.User{}
@@ -274,21 +273,27 @@ func (r *Repository) CreateSyllabus(s *types.Syllabus) error {
 	s.ID = int(id)
 	return nil
 }
-
-// GetSyllabusByID retrieves a syllabus by ID.
 func (r *Repository) GetSyllabusByID(id int) (*types.Syllabus, error) {
-	query := `SELECT id, course_id, lecturer_id, status, submission_date, created_at, updated_at, data FROM syllabi WHERE id = ?`
-	s := &types.Syllabus{}
-	var submissionDate string
-	if err := r.DB.QueryRow(query, id).Scan(&s.ID, &s.CourseID, &s.LecturerID, &s.Status, &submissionDate, &s.CreatedAt, &s.UpdatedAt, &s.Data); err != nil {
+	query := "SELECT id, data, created_at FROM syllabi WHERE id = ?"
+	row := r.DB.QueryRow(query, id)
+
+	var syl types.Syllabus
+	var createdAtRaw []byte
+
+	// Scan into syl.ID, syl.Data and the raw value for created_at.
+	if err := row.Scan(&syl.ID, &syl.Data, &createdAtRaw); err != nil {
 		return nil, fmt.Errorf("GetSyllabusByID: %w", err)
 	}
-	parsed, err := time.Parse("2006-01-02", submissionDate)
+
+	// Convert the raw value to a string and then parse it into time.Time.
+	createdAtStr := string(createdAtRaw)
+	parsedTime, err := time.Parse("2006-01-02 15:04:05", createdAtStr)
 	if err != nil {
-		return nil, fmt.Errorf("GetSyllabusByID (parse submission_date): %w", err)
+		return nil, fmt.Errorf("GetSyllabusByID: time parse error: %w", err)
 	}
-	s.SubmissionDate = parsed
-	return s, nil
+	syl.CreatedAt = parsedTime
+
+	return &syl, nil
 }
 
 // GetSyllabiByLecturer fetches all syllabi for the given lecturer (user) ID.
@@ -378,11 +383,9 @@ func (r *Repository) DeleteSyllabus(id int) error {
 }
 
 // RETURN UI COMPONENTS
-// GetCardsByLecturer fetches syllabus details for the given lecturer ID and returns a list of cards.
-// GetCardsByLecturer fetches syllabus details for the given lecturer ID and returns a list of cards.
-func (r *Repository) GetCardsByLecturer(lecturerID int) ([]map[string]interface{}, error) {
+func (r *Repository) GetCardsByLecturer(lecturerID int) ([]UIcomponents.Card, error) {
 	query := `
-		SELECT s.status, s.submission_date, c.name AS courseName, d.name AS departmentName, u.name AS lecturerName
+		SELECT s.id, s.status, s.submission_date, c.name AS courseName, d.name AS departmentName, u.name AS lecturerName
 		FROM syllabi s
 		JOIN courses c ON s.course_id = c.id
 		JOIN departments d ON c.department_id = d.id
@@ -396,27 +399,34 @@ func (r *Repository) GetCardsByLecturer(lecturerID int) ([]map[string]interface{
 	}
 	defer rows.Close()
 
-	var cards []map[string]interface{}
+	var cards []UIcomponents.Card
 	for rows.Next() {
-		var status, courseName, departmentName, lecturerName string
-		var submissionDateStr string
+		var (
+			id                int
+			status            string
+			submissionDateStr string
+			courseName        string
+			departmentName    string
+			lecturerName      string
+		)
 
-		if err := rows.Scan(&status, &submissionDateStr, &courseName, &departmentName, &lecturerName); err != nil {
+		if err := rows.Scan(&id, &status, &submissionDateStr, &courseName, &departmentName, &lecturerName); err != nil {
 			return nil, fmt.Errorf("GetCardsByLecturer scan: %w", err)
 		}
 
-		// Parse and reformat the submission date.
-		dt, err := time.Parse("2006-01-02", submissionDateStr)
+		submissionDate, err := time.Parse("2006-01-02", submissionDateStr)
 		if err != nil {
-			return nil, fmt.Errorf("parsing submission_date: %w", err)
+			return nil, fmt.Errorf("parsing date: %w", err)
 		}
 
-		card := map[string]interface{}{
-			"date":     dt.Format("02/01/2006"),
-			"title":    courseName,
-			"lecturer": lecturerName,
-			"field":    departmentName,
-			"status":   status, // used both as display and CSS class
+		card := UIcomponents.Card{
+			ID:          id,
+			Date:        submissionDate.Format("02/01/2006"),
+			Title:       courseName,
+			Lecturer:    lecturerName,
+			Field:       departmentName,
+			Status:      status,
+			StatusLabel: status,
 		}
 		cards = append(cards, card)
 	}
@@ -553,5 +563,60 @@ func (r *Repository) InsertSyllabusFromDraft(userID int, draft *UIcomponents.Dra
 		return err
 	}
 
+	return nil
+}
+
+// GetCommentsBySyllabusID fetches all comments associated with the given syllabus ID.
+func (r *Repository) GetCommentsBySyllabusID(syllabusID int) ([]types.Comment, error) {
+	query := `
+        SELECT id, syllabus_id, user_id, content, created_at, updated_at 
+        FROM comments 
+        WHERE syllabus_id = ? 
+        ORDER BY created_at ASC
+    `
+	rows, err := r.DB.Query(query, syllabusID)
+	if err != nil {
+		return nil, fmt.Errorf("GetCommentsBySyllabusID: %w", err)
+	}
+	defer rows.Close()
+
+	var comments []types.Comment
+
+	for rows.Next() {
+		var c types.Comment
+		var createdAtStr, updatedAtStr string
+
+		if err := rows.Scan(&c.ID, &c.SyllabusID, &c.UserID, &c.Content, &createdAtStr, &updatedAtStr); err != nil {
+			return nil, fmt.Errorf("GetCommentsBySyllabusID scan: %w", err)
+		}
+
+		// Parse the timestamps from string to time.Time.
+		c.CreatedAt, err = time.Parse("2006-01-02 15:04:05", createdAtStr)
+		if err != nil {
+			return nil, fmt.Errorf("GetCommentsBySyllabusID: parsing created_at: %w", err)
+		}
+		c.UpdatedAt, err = time.Parse("2006-01-02 15:04:05", updatedAtStr)
+		if err != nil {
+			return nil, fmt.Errorf("GetCommentsBySyllabusID: parsing updated_at: %w", err)
+		}
+
+		comments = append(comments, c)
+	}
+
+	return comments, nil
+}
+
+// AddComment inserts a new comment associated with a syllabus into the DB.
+func (r *Repository) AddComment(c *types.Comment) error {
+	query := `INSERT INTO comments (syllabus_id, user_id, content) VALUES (?, ?, ?)`
+	result, err := r.DB.Exec(query, c.SyllabusID, c.UserID, c.Content)
+	if err != nil {
+		return fmt.Errorf("AddComment: %w", err)
+	}
+	id, err := result.LastInsertId()
+	if err != nil {
+		return fmt.Errorf("AddComment (retrieve id): %w", err)
+	}
+	c.ID = int(id)
 	return nil
 }

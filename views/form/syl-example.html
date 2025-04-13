@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Responsive Sidebar Navigation</title>
+    <style>
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f4f4f4;
+        }
+        /* Sidebar styles (positioned on the right) */
+        .sidebar {
+            position: fixed;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            background: #fff;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+        .sidebar a {
+            display: block;
+            width: 40px;
+            height: 40px;
+            line-height: 40px;
+            text-align: center;
+            margin: 10px 0;
+            border-radius: 50%;
+            background: gray;
+            color: #fff;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background 0.3s, transform 0.3s;
+        }
+        /* Style for active (current) and passed (previous) sections */
+        .sidebar a.active,
+        .sidebar a.passed {
+            background: green;
+        }
+        /* Optional: make the active button pop a little */
+        .sidebar a.active {
+            transform: scale(1.1);
+            box-shadow: 0 0 10px rgba(0, 128, 0, 0.5);
+        }
+        /* Content and blocks */
+        .content {
+            margin-right: 100px; /* Adjust margin since sidebar is now on the right */
+            padding: 20px;
+        }
+        .block {
+            height: 100vh;
+            margin-bottom: 50px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+        /* Responsive layout: on small screens, move sidebar to bottom */
+        @media (max-width: 600px) {
+            .sidebar {
+                top: auto;
+                bottom: 0;
+                right: 0;
+                left: 0;
+                width: 100%;
+                transform: none;
+                display: flex;
+                justify-content: center;
+                padding: 10px;
+                border-radius: 0;
+            }
+            .sidebar a {
+                margin: 0 5px;
+            }
+            .content {
+                margin-right: 0;
+                margin-bottom: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- Sidebar Navigation -->
+<div class="sidebar">
+    <a href="#block1" data-index="1" id="nav-1">1</a>
+    <a href="#block2" data-index="2" id="nav-2">2</a>
+    <a href="#block3" data-index="3" id="nav-3">3</a>
+    <a href="#block4" data-index="4" id="nav-4">4</a>
+    <a href="#block5" data-index="5" id="nav-5">5</a>
+</div>
+
+<!-- Main Content -->
+<div class="content">
+    <section id="block1" class="block">Block 1</section>
+    <section id="block2" class="block">Block 2</section>
+    <section id="block3" class="block">Block 3</section>
+    <section id="block4" class="block">Block 4</section>
+    <section id="block5" class="block">Block 5</section>
+</div>
+
+<script>
+    // Cache references for sections and navigation links
+    const blocks = document.querySelectorAll('.block');
+    const navLinks = document.querySelectorAll('.sidebar a');
+
+    // Update active sidebar link based on scroll position
+    function updateSidebar() {
+        let currentBlockIndex = 0;
+        const triggerPoint = window.innerHeight / 2; // Use midpoint of the viewport
+
+        blocks.forEach((block, index) => {
+            const rect = block.getBoundingClientRect();
+            if (rect.top <= triggerPoint) {
+                currentBlockIndex = index;
+            }
+        });
+
+        // Update nav buttons:
+        navLinks.forEach((link, index) => {
+            // Buttons for blocks above or equal to the current one become green
+            if (index <= currentBlockIndex) {
+                link.classList.add('passed');
+            } else {
+                link.classList.remove('passed');
+            }
+            // Mark the exact current block as active (with extra styling)
+            link.classList.toggle('active', index === currentBlockIndex);
+        });
+    }
+
+    // Listen for scrolling events
+    window.addEventListener('scroll', updateSidebar);
+
+    // Initial update on page load
+    updateSidebar();
+</script>
+</body>
+</html>

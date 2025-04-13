@@ -1,78 +1,151 @@
-<!DOCTYPE html>
-<html lang="he">
-<head>
-    <meta charset="UTF-8">
-    <title>כניסה</title>
-    <!-- Include HTMX from CDN -->
-    <script src="https://unpkg.com/htmx.org@1.9.2"></script>
-    <style>
-        /* Inline CSS for a beautiful login page */
-        body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #74ABE2, #5563DE);
-            margin: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            color: #333;
-        }
-        .login-container {
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            padding: 2rem;
-            width: 320px;
-            text-align: center;
-        }
-        .login-container h1 {
-            margin-bottom: 1.5rem;
-            font-size: 1.5rem;
-            color: #5563DE;
-        }
-        .login-container label {
-            display: block;
-            margin-bottom: 0.5rem;
-            text-align: right;
-        }
-        .login-container input[type="email"] {
-            width: 100%;
-            padding: 0.5rem;
-            margin-bottom: 1rem;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        .login-container button {
-            width: 100%;
-            padding: 0.75rem;
-            background: #5563DE;
-            border: none;
-            border-radius: 4px;
-            color: #fff;
-            font-size: 1rem;
-            cursor: pointer;
-        }
-        .login-container button:hover {
-            background: #434bbd;
-        }
-        .message {
-            margin-top: 1rem;
-            font-size: 0.9rem;
-            color: #d9534f;
-        }
-    </style>
-</head>
-<body>
-<div class="login-container">
-    <h1>דף כניסה</h1>
-    <form id="loginForm" hx-post="/login" hx-target="#response" hx-swap="innerHTML" method="POST">
-        <label for="email">כתובת אימייל:</label>
-        <input type="email" id="email" name="email" required placeholder="example@domain.com">
-        <button type="submit">התחבר</button>
-    </form>
-    <!-- Container where HTMX will inject the response -->
-    <div id="response" class="message"></div>
-</div>
-</body>
-</html>
+    <!DOCTYPE html>
+    <html lang="he">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>מערכת הסילבוסים - התחברות</title>
+        <!-- Material symbols -->
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+        <!-- Rubik font -->
+        <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap" rel="stylesheet">
+        <!-- Include HTMX from CDN -->
+        <script src="https://unpkg.com/htmx.org@1.9.2"></script>
+        <!-- Main stylesheet -->
+        <link rel="stylesheet" href="/static/styles.css">
+        <style>
+            /* Keyframe for page fade-in */
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(20px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+
+            /* Base styles matching your design */
+            body {
+                background-color: #f5f5f5;
+                font-family: 'Rubik', sans-serif;
+                direction: rtl;
+                text-align: center;
+                margin: 0;
+                padding-top: 60px;
+                animation: fadeIn 1s ease-out;
+            }
+
+            /* Center the login card */
+            .login-wrapper {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: calc(100vh - 60px);
+                padding: 20px;
+            }
+
+            /* Login card container */
+            .login-container {
+                background-color: #fff;
+                width: 100%;
+                max-width: 400px;
+                padding: 40px 30px;
+                border-radius: 10px;
+                box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+                text-align: center;
+                animation: fadeIn 1s ease-out;
+            }
+
+            /* Syllabus Icon styling */
+            .login-icon {
+                font-size: 60px;
+                color: #617CFF;
+                margin-bottom: 10px;
+            }
+
+            /* System title styling */
+            .system-title {
+                font-size: 20px;
+                color: #555;
+                margin-bottom: 5px;
+                font-weight: 500;
+            }
+
+            /* Header text */
+            .login-header {
+                font-size: 28px;
+                font-weight: 500;
+                color: #333;
+                margin-bottom: 20px;
+            }
+
+            /* Login form styles */
+            .login-form {
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .login-input {
+                padding: 12px 15px;
+                font-size: 16px;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+                transition: border-color 0.3s ease;
+                outline: none;
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+            .login-input:focus {
+                border-color: #617CFF;
+            }
+
+            .login-button {
+                padding: 12px;
+                font-size: 18px;
+                font-weight: 500;
+                color: #fff;
+                background-color: #617CFF;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                transition: background-color 0.3s ease, transform 0.2s ease;
+            }
+
+            .login-button:hover {
+                background-color: #5871e8;
+                transform: scale(1.03);
+            }
+
+            /* HTMX response message */
+            .login-message {
+                margin-top: 20px;
+                font-size: 14px;
+                color: #d9534f;
+            }
+
+            /* Responsive adjustments */
+            @media screen and (max-width: 480px) {
+                .login-container {
+                    padding: 30px 20px;
+                }
+                .login-header {
+                    font-size: 24px;
+                }
+                .login-button {
+                    font-size: 16px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+    <div class="login-wrapper">
+        <div class="login-container">
+            <div class="system-title">מערכת הסילבוסים</div>
+            <span class="material-symbols-outlined login-icon">menu_book</span>
+            <div class="login-header">התחברות</div>
+            <form id="loginForm" class="login-form" hx-post="/login" hx-target="#response" hx-swap="innerHTML" method="POST">
+                <input type="email" name="email" class="login-input" placeholder="example@domain.com" required>
+                <button type="submit" class="login-button">התחבר</button>
+            </form>
+            <div id="response" class="login-message"></div>
+        </div>
+    </div>
+    </body>
+    </html>
