@@ -49,7 +49,7 @@ func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		if err != nil {
 			c.Logger().Warn("Unauthorized access attempt, redirecting to /login")
 			c.Response().Header().Set("HX-Redirect", "/login")
-			return c.Redirect(http.StatusSeeOther, "/login")
+			return c.String(http.StatusOK, "Redirecting to login page...")
 		}
 		return next(c)
 	}

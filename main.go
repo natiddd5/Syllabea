@@ -39,7 +39,7 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	// Use session mid with a key (replace "secret" with a strong key)
+	// Use session mid with a key
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte("secret"))))
 
 	e.Renderer = Render.NewTemplate()
@@ -49,5 +49,6 @@ func main() {
 	handler.RegisterRoutes(e, repo)
 	authGroup := e.Group("")
 	authGroup.Use(mid.AuthMiddleware)
+
 	e.Logger.Fatal(e.Start(":9090"))
 }

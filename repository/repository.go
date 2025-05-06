@@ -41,7 +41,6 @@ func (r *Repository) CreateUser(u *types.User) error {
 	return nil
 }
 
-// GetUserByID retrieves a user by ID.
 func (r *Repository) GetUserByID(id int) (*types.User, error) {
 	query := `SELECT id, name, email, role, created_at FROM users WHERE id = ?`
 	u := &types.User{}
@@ -274,21 +273,38 @@ func (r *Repository) CreateSyllabus(s *types.Syllabus) error {
 	s.ID = int(id)
 	return nil
 }
-
-// GetSyllabusByID retrieves a syllabus by ID.
 func (r *Repository) GetSyllabusByID(id int) (*types.Syllabus, error) {
-	query := `SELECT id, course_id, lecturer_id, status, submission_date, created_at, updated_at, data FROM syllabi WHERE id = ?`
-	s := &types.Syllabus{}
-	var submissionDate string
-	if err := r.DB.QueryRow(query, id).Scan(&s.ID, &s.CourseID, &s.LecturerID, &s.Status, &submissionDate, &s.CreatedAt, &s.UpdatedAt, &s.Data); err != nil {
+	query := "SELECT id, course_id, lecturer_id, status, submission_date, created_at, updated_at, data FROM syllabi WHERE id = ?"
+	row := r.DB.QueryRow(query, id)
+
+	var syl types.Syllabus
+	var submissionDateStr, createdAtStr, updatedAtStr string
+
+	// Scan into all fields of the syllabus
+	if err := row.Scan(&syl.ID, &syl.CourseID, &syl.LecturerID, &syl.Status, &submissionDateStr, &createdAtStr, &updatedAtStr, &syl.Data); err != nil {
 		return nil, fmt.Errorf("GetSyllabusByID: %w", err)
 	}
-	parsed, err := time.Parse("2006-01-02", submissionDate)
+
+	// Parse the date strings into time.Time
+	submissionDate, err := time.Parse("2006-01-02", submissionDateStr)
 	if err != nil {
-		return nil, fmt.Errorf("GetSyllabusByID (parse submission_date): %w", err)
+		return nil, fmt.Errorf("GetSyllabusByID: submission_date parse error: %w", err)
 	}
-	s.SubmissionDate = parsed
-	return s, nil
+	syl.SubmissionDate = submissionDate
+
+	createdAt, err := time.Parse("2006-01-02 15:04:05", createdAtStr)
+	if err != nil {
+		return nil, fmt.Errorf("GetSyllabusByID: created_at parse error: %w", err)
+	}
+	syl.CreatedAt = createdAt
+
+	updatedAt, err := time.Parse("2006-01-02 15:04:05", updatedAtStr)
+	if err != nil {
+		return nil, fmt.Errorf("GetSyllabusByID: updated_at parse error: %w", err)
+	}
+	syl.UpdatedAt = updatedAt
+
+	return &syl, nil
 }
 
 // GetSyllabiByLecturer fetches all syllabi for the given lecturer (user) ID.
@@ -296,7 +312,7 @@ func (r *Repository) GetSyllabiByLecturer(lecturerID int) ([]types.Syllabus, err
 	query := `
         SELECT id, course_id, lecturer_id, status, submission_date, created_at, updated_at, data
         FROM syllabi
-        WHERE lecturer_id = ?
+        WHERE lecturer_id = ? AND status != 'Deleted'
         ORDER BY submission_date DESC
     `
 	rows, err := r.DB.Query(query, lecturerID)
@@ -333,7 +349,7 @@ func (r *Repository) GetSyllabiByLecturer(lecturerID int) ([]types.Syllabus, err
 
 // GetAllSyllabi retrieves all syllabi.
 func (r *Repository) GetAllSyllabi() ([]types.Syllabus, error) {
-	query := `SELECT id, course_id, lecturer_id, status, submission_date, created_at, updated_at, data FROM syllabi`
+	query := `SELECT id, course_id, lecturer_id, status, submission_date, created_at, updated_at, data FROM syllabi WHERE status != 'Deleted'`
 	rows, err := r.DB.Query(query)
 	if err != nil {
 		return nil, fmt.Errorf("GetAllSyllabi: %w", err)
@@ -378,16 +394,14 @@ func (r *Repository) DeleteSyllabus(id int) error {
 }
 
 // RETURN UI COMPONENTS
-// GetCardsByLecturer fetches syllabus details for the given lecturer ID and returns a list of cards.
-// GetCardsByLecturer fetches syllabus details for the given lecturer ID and returns a list of cards.
-func (r *Repository) GetCardsByLecturer(lecturerID int) ([]map[string]interface{}, error) {
+func (r *Repository) GetCardsByLecturer(lecturerID int) ([]UIcomponents.Card, error) {
 	query := `
-		SELECT s.status, s.submission_date, c.name AS courseName, d.name AS departmentName, u.name AS lecturerName
+		SELECT s.id, s.status, s.submission_date, c.name AS courseName, d.name AS departmentName, u.name AS lecturerName
 		FROM syllabi s
 		JOIN courses c ON s.course_id = c.id
 		JOIN departments d ON c.department_id = d.id
 		JOIN users u ON s.lecturer_id = u.id
-		WHERE s.lecturer_id = ?
+		WHERE s.lecturer_id = ? and status != 'Deleted'
 		ORDER BY s.submission_date DESC
 	`
 	rows, err := r.DB.Query(query, lecturerID)
@@ -396,27 +410,34 @@ func (r *Repository) GetCardsByLecturer(lecturerID int) ([]map[string]interface{
 	}
 	defer rows.Close()
 
-	var cards []map[string]interface{}
+	var cards []UIcomponents.Card
 	for rows.Next() {
-		var status, courseName, departmentName, lecturerName string
-		var submissionDateStr string
+		var (
+			id                int
+			status            string
+			submissionDateStr string
+			courseName        string
+			departmentName    string
+			lecturerName      string
+		)
 
-		if err := rows.Scan(&status, &submissionDateStr, &courseName, &departmentName, &lecturerName); err != nil {
+		if err := rows.Scan(&id, &status, &submissionDateStr, &courseName, &departmentName, &lecturerName); err != nil {
 			return nil, fmt.Errorf("GetCardsByLecturer scan: %w", err)
 		}
 
-		// Parse and reformat the submission date.
-		dt, err := time.Parse("2006-01-02", submissionDateStr)
+		submissionDate, err := time.Parse("2006-01-02", submissionDateStr)
 		if err != nil {
-			return nil, fmt.Errorf("parsing submission_date: %w", err)
+			return nil, fmt.Errorf("parsing date: %w", err)
 		}
 
-		card := map[string]interface{}{
-			"date":     dt.Format("02/01/2006"),
-			"title":    courseName,
-			"lecturer": lecturerName,
-			"field":    departmentName,
-			"status":   status, // used both as display and CSS class
+		card := UIcomponents.Card{
+			ID:          id,
+			Date:        submissionDate.Format("02/01/2006"),
+			Title:       courseName,
+			Lecturer:    lecturerName,
+			Field:       departmentName,
+			Status:      status,
+			StatusLabel: status,
 		}
 		cards = append(cards, card)
 	}
@@ -431,7 +452,7 @@ func (r *Repository) FilterCardsByLecturer(lecturerID int, search, fromDate, toD
 		JOIN courses c ON s.course_id = c.id
 		JOIN departments d ON c.department_id = d.id
 		JOIN users u ON s.lecturer_id = u.id
-		WHERE s.lecturer_id = ?
+		WHERE s.lecturer_id = ? and s.status != 'Deleted'
 	`
 	params := []interface{}{lecturerID}
 
@@ -444,7 +465,7 @@ func (r *Repository) FilterCardsByLecturer(lecturerID int, search, fromDate, toD
 
 	// Filter by from-date if provided.
 	if fromDate != "" {
-		parsedFrom, err := time.Parse("02/01/2006", fromDate)
+		parsedFrom, err := time.Parse("2006-01-02", fromDate)
 		if err != nil {
 			return nil, fmt.Errorf("invalid from-date format: %w", err)
 		}
@@ -454,7 +475,7 @@ func (r *Repository) FilterCardsByLecturer(lecturerID int, search, fromDate, toD
 
 	// Filter by to-date if provided.
 	if toDate != "" {
-		parsedTo, err := time.Parse("02/01/2006", toDate)
+		parsedTo, err := time.Parse("2006-01-02", toDate)
 		if err != nil {
 			return nil, fmt.Errorf("invalid to-date format: %w", err)
 		}
@@ -554,4 +575,246 @@ func (r *Repository) InsertSyllabusFromDraft(userID int, draft *UIcomponents.Dra
 	}
 
 	return nil
+}
+
+// GetCommentsBySyllabusID fetches all comments associated with the given syllabus ID.
+func (r *Repository) GetCommentsBySyllabusID(syllabusID int) ([]types.Comment, error) {
+	query := `
+        SELECT id, syllabus_id, user_id, content, created_at, updated_at 
+        FROM comments 
+        WHERE syllabus_id = ? 
+        ORDER BY created_at ASC
+    `
+	rows, err := r.DB.Query(query, syllabusID)
+	if err != nil {
+		return nil, fmt.Errorf("GetCommentsBySyllabusID: %w", err)
+	}
+	defer rows.Close()
+
+	var comments []types.Comment
+
+	for rows.Next() {
+		var c types.Comment
+		var createdAtStr, updatedAtStr string
+
+		if err := rows.Scan(&c.ID, &c.SyllabusID, &c.UserID, &c.Content, &createdAtStr, &updatedAtStr); err != nil {
+			return nil, fmt.Errorf("GetCommentsBySyllabusID scan: %w", err)
+		}
+
+		// Parse the timestamps from string to time.Time.
+		c.CreatedAt, err = time.Parse("2006-01-02 15:04:05", createdAtStr)
+		if err != nil {
+			return nil, fmt.Errorf("GetCommentsBySyllabusID: parsing created_at: %w", err)
+		}
+		c.UpdatedAt, err = time.Parse("2006-01-02 15:04:05", updatedAtStr)
+		if err != nil {
+			return nil, fmt.Errorf("GetCommentsBySyllabusID: parsing updated_at: %w", err)
+		}
+
+		comments = append(comments, c)
+	}
+
+	return comments, nil
+}
+
+// AddComment inserts a new comment associated with a syllabus into the DB.
+func (r *Repository) AddComment(c *types.Comment) error {
+	query := `INSERT INTO comments (syllabus_id, user_id, content) VALUES (?, ?, ?)`
+	result, err := r.DB.Exec(query, c.SyllabusID, c.UserID, c.Content)
+	if err != nil {
+		return fmt.Errorf("AddComment: %w", err)
+	}
+	id, err := result.LastInsertId()
+	if err != nil {
+		return fmt.Errorf("AddComment (retrieve id): %w", err)
+	}
+	c.ID = int(id)
+	return nil
+}
+
+// GetUserDraft retrieves a user's draft from the database.
+func (r *Repository) GetUserDraft(userID int) (*UIcomponents.Draft, error) {
+	// Check if there's a draft syllabus for this user
+	query := `
+		SELECT id, data 
+		FROM syllabi 
+		WHERE lecturer_id = ? AND status = 'Draft' 
+		ORDER BY updated_at DESC 
+		LIMIT 1
+	`
+	row := r.DB.QueryRow(query, userID)
+
+	var id int
+	var data []byte
+	err := row.Scan(&id, &data)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// No draft found, create a new one
+			user, err := r.GetUserByID(userID)
+			if err != nil {
+				return nil, fmt.Errorf("GetUserDraft (get user): %w", err)
+			}
+
+			draft := &UIcomponents.Draft{
+				ID:                      -1,
+				LecturerName:            user.Name,
+				LecturerEmail:           user.Email,
+				CourseRequirements:      []string{},
+				LearningOutcomes:        []string{},
+				CourseObjectives:        []string{},
+				CourseStructure:         []string{},
+				AssignmentsStructure:    []string{},
+				SyllabusRows:            []UIcomponents.SyllabusRow{{}},
+				GradeComponents:         []UIcomponents.GradeComponent{},
+				BibliographyRequired:    []string{},
+				BibliographyRecommended: []string{},
+			}
+
+			// Store the new draft in the database
+			jsonData, err := json.Marshal(draft)
+			if err != nil {
+				return nil, fmt.Errorf("GetUserDraft (marshal): %w", err)
+			}
+
+			now := time.Now()
+			syl := types.Syllabus{
+				ID:             0,
+				CourseID:       1,
+				LecturerID:     userID,
+				Status:         "Draft",
+				SubmissionDate: now,
+				CreatedAt:      now,
+				UpdatedAt:      now,
+				Data:           jsonData,
+			}
+
+			err = r.CreateSyllabus(&syl)
+			if err != nil {
+				return nil, fmt.Errorf("GetUserDraft (create): %w", err)
+			}
+
+			draft.ID = syl.ID
+			return draft, nil
+		}
+		return nil, fmt.Errorf("GetUserDraft: %w", err)
+	}
+
+	// Unmarshal the data into a Draft
+	var draft UIcomponents.Draft
+	err = json.Unmarshal(data, &draft)
+	if err != nil {
+		return nil, fmt.Errorf("GetUserDraft (unmarshal): %w", err)
+	}
+
+	draft.ID = id
+	return &draft, nil
+}
+
+// CreateNewUserDraft creates a new draft for a user regardless of whether they already have one.
+func (r *Repository) CreateNewUserDraft(userID int) (*UIcomponents.Draft, error) {
+	// Get user information
+	user, err := r.GetUserByID(userID)
+	if err != nil {
+		return nil, fmt.Errorf("CreateNewUserDraft (get user): %w", err)
+	}
+
+	// Create a new draft
+	draft := &UIcomponents.Draft{
+		ID:                      -1,
+		LecturerName:            user.Name,
+		LecturerEmail:           user.Email,
+		CourseRequirements:      []string{},
+		LearningOutcomes:        []string{},
+		CourseObjectives:        []string{},
+		CourseStructure:         []string{},
+		AssignmentsStructure:    []string{},
+		SyllabusRows:            []UIcomponents.SyllabusRow{{}},
+		GradeComponents:         []UIcomponents.GradeComponent{},
+		BibliographyRequired:    []string{},
+		BibliographyRecommended: []string{},
+	}
+
+	// Store the new draft in the database
+	jsonData, err := json.Marshal(draft)
+	if err != nil {
+		return nil, fmt.Errorf("CreateNewUserDraft (marshal): %w", err)
+	}
+
+	now := time.Now()
+	syl := types.Syllabus{
+		ID:             0,
+		CourseID:       1,
+		LecturerID:     userID,
+		Status:         "Draft",
+		SubmissionDate: now,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+		Data:           jsonData,
+	}
+
+	err = r.CreateSyllabus(&syl)
+	if err != nil {
+		return nil, fmt.Errorf("CreateNewUserDraft (create): %w", err)
+	}
+
+	draft.ID = syl.ID
+	return draft, nil
+}
+
+// SaveUserDraft saves a user's draft to the database.
+func (r *Repository) SaveUserDraft(userID int, draft *UIcomponents.Draft) error {
+	// Marshal the draft to JSON
+	jsonData, err := json.Marshal(draft)
+	if err != nil {
+		return fmt.Errorf("SaveUserDraft (marshal): %w", err)
+	}
+
+	// Check if this is a new draft or an existing one
+	if draft.ID == -1 {
+		// Create a new draft
+		now := time.Now()
+		syl := types.Syllabus{
+			ID:             0,
+			CourseID:       0,
+			LecturerID:     userID,
+			Status:         "Draft",
+			SubmissionDate: now,
+			CreatedAt:      now,
+			UpdatedAt:      now,
+			Data:           jsonData,
+		}
+
+		err = r.CreateSyllabus(&syl)
+		if err != nil {
+			return fmt.Errorf("SaveUserDraft (create): %w", err)
+		}
+
+		draft.ID = syl.ID
+	} else {
+		// Update existing draft
+		query := `UPDATE syllabi SET data = ?, updated_at = ? WHERE id = ?`
+		_, err := r.DB.Exec(query, jsonData, time.Now().Format("2006-01-02 15:04:05"), draft.ID)
+		if err != nil {
+			return fmt.Errorf("SaveUserDraft (update): %w", err)
+		}
+	}
+
+	return nil
+}
+
+// GetEditedSyllabus retrieves a syllabus by ID and unmarshals its data into a Draft.
+func (r *Repository) GetEditedSyllabus(syllabusID int) (*UIcomponents.Draft, error) {
+	syl, err := r.GetSyllabusByID(syllabusID)
+	if err != nil {
+		return nil, fmt.Errorf("GetEditedSyllabus: %w", err)
+	}
+
+	var draft UIcomponents.Draft
+	err = json.Unmarshal(syl.Data, &draft)
+	if err != nil {
+		return nil, fmt.Errorf("GetEditedSyllabus (unmarshal): %w", err)
+	}
+
+	draft.ID = syl.ID
+	return &draft, nil
 }

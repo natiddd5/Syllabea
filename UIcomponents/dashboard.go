@@ -26,6 +26,7 @@ type DateSection struct {
 
 type Card struct {
 	Title       string
+	ID          int
 	Date        string
 	Lecturer    string
 	Field       string

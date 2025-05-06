@@ -42,9 +42,11 @@ type Syllabus struct {
 // SyllabusStatus is a custom type for the status of a syllabus.
 type SyllabusStatus string
 
-// Allowed syllabus status options.
-const (
-	SyllabusStatusDraft    SyllabusStatus = "Draft"
-	SyllabusStatusInReview SyllabusStatus = "In Review"
-	SyllabusStatusApproved SyllabusStatus = "Approved"
-)
+type Comment struct {
+	ID         int       `json:"id" db:"id"`                   // Unique identifier for the comment.
+	SyllabusID int       `json:"syllabus_id" db:"syllabus_id"` // The ID of the associated syllabus.
+	UserID     int       `json:"user_id" db:"user_id"`         // The ID of the commenting user.
+	Content    string    `json:"content" db:"content"`         // The text content of the comment.
+	CreatedAt  time.Time `json:"created_at" db:"created_at"`   // Timestamp of when the comment was created.
+	UpdatedAt  time.Time `json:"updated_at" db:"updated_at"`   // Timestamp of the last update (auto-updated on change).
+}

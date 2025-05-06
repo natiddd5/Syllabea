@@ -322,50 +322,61 @@ body {
 .filter-button:hover {
     background-color: #5871e8;
 }
-
-/* 1) The dropdown container remains the same */
 .filter-dropdown {
     position: relative;
     display: inline-block;
 }
 
-/* 2) Let the width auto-adjust so the box ends soon after the longest text */
+.filter-alt-icon {
+    cursor: pointer;
+    font-size: 24px;
+    padding: 6px;
+    border-radius: 6px;
+    transition: background 0.3s;
+}
+
+.filter-alt-icon:hover {
+    background-color: #f0f0f0;
+}
+
 .dropdown-content {
     display: none;
     position: absolute;
-    top: 20px;
-    right: -45px;               /* adjust if you want the whole box moved left/right */
-    background-color: #fff;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    width: auto;                /* let content define the width */
-    padding: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    z-index: 999;
+    top: 40px;
+    right: 0;
+    background-color: white;
+    padding: 10px;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    border-radius: 8px;
 }
 
-/* Shows the dropdown when `.show` is toggled */
 .dropdown-content.show {
     display: block;
 }
 
-/* 3) The item row: align right for RTL and space out elements */
 .dropdown-item {
     display: flex;
-    align-items: flex-start;
-    justify-content: flex-end;  /* text on right, checkbox on the left */
+    align-items: center;
+    gap: 8px;
     margin-bottom: 10px;
+    font-size: 18px;
+    cursor: pointer;
 }
+
 .dropdown-item:last-child {
     margin-bottom: 0;
 }
 
-/* 4) Increase the gap between checkbox and text */
 .dropdown-item input[type="checkbox"] {
-    margin-left: 10px;          /* space between label text and checkbox */
-    transform: scale(1.2);      /* optional, enlarge checkbox if desired */
+    accent-color: #007BFF;
+    transform: scale(1.2);
 }
 
+/* Optional: Smooth transition */
+.dropdown-content {
+    transition: all 0.2s ease-in-out;
+}
 
 /* Icon style (optional) */
 .filter-alt-icon {
@@ -444,34 +455,34 @@ body {
     border-right-color: #0f7b0f;
 }
 
-.card.in-progress {
-    border-right-color: #ffcc00;
+.card.in-review {
+    border-right-color: #108aff;
 }
 
-.card.failed {
-    border-right-color: #d9534f;
+.card.draft {
+    border-right-color: #7c7c7c;
 }
 
 /* Status Column */
 .status-column {
     text-align: center;
+    color:white;
     font-weight: bold;
     padding: 5px 10px;
     font-size: 14px;
     white-space: nowrap;
     border-radius: 8px;
-    background-color: #d1f5d3;
-    color: #0f7b0f;
 }
 
-.status-column.in-progress {
-    background-color: #fff3cd;
-    color: #856404;
+.status-column.approved{
+    background-color: #0f7b0f;
+}
+.status-column.in-review{
+    background-color: #108aff;
 }
 
-.status-column.failed {
-    background-color: #f8d7da;
-    color: #721c24;
+.status-column.draft {
+    background-color: #7c7c7c;
 }
 
 /* Icons Column */
