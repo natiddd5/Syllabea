@@ -463,6 +463,10 @@ body {
     border-right-color: #7c7c7c;
 }
 
+.card.deleted {
+    border-right-color: #ff0000;
+}
+
 /* Status Column */
 .status-column {
     text-align: center;
@@ -483,6 +487,10 @@ body {
 
 .status-column.draft {
     background-color: #7c7c7c;
+}
+
+.status-column.deleted {
+    background-color: #ff0000;
 }
 
 /* Icons Column */

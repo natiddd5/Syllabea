@@ -89,8 +89,10 @@
                       hx-push-url="true">edit</span>
                 <span class="material-symbols-outlined delete-button"
                       onclick="showDeleteModal({{ .ID }})">delete</span>
-                <span class="material-symbols-outlined">visibility</span>
-                <span class="material-symbols-outlined">print</span>
+                <span class="material-symbols-outlined"
+                      onclick="window.open('/syllabus/preview/{{ .ID }}', '_blank')">visibility</span>
+                <span class="material-symbols-outlined"
+                      onclick="printSyllabus({{ .ID }})">print</span>
                 <span class="material-symbols-outlined">share</span>
             </div>
             <span class="material-symbols-outlined">note</span>
@@ -122,6 +124,16 @@
 
         function hideDeleteModal(id) {
             document.getElementById('deleteModal-' + id).style.display = 'none';
+        }
+
+        function printSyllabus(id) {
+            // Open the preview in a new window
+            const previewWindow = window.open('/syllabus/preview/' + id, '_blank');
+
+            // Wait for the preview to load, then print
+            previewWindow.onload = function() {
+                previewWindow.print();
+            };
         }
 
         // Close modal when clicking outside

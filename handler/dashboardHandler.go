@@ -245,3 +245,107 @@ func handleDeleteSyllabus(c echo.Context, repo *repository.Repository) error {
 	// Return an empty response to indicate success (the card will be removed from the UI)
 	return c.NoContent(http.StatusOK)
 }
+
+// handleTrashPage displays the trash page with deleted syllabi
+func handleTrashPage(c echo.Context, repo *repository.Repository) error {
+	// Use our common getUserID function.
+	userID, err := mid.GetUserID(c)
+	if err != nil {
+		c.Logger().Error("getUserID error:", err)
+		// Set HX-Redirect header for HTMX so that it knows to navigate back to login.
+		c.Response().Header().Set("HX-Redirect", "/login")
+		return c.String(http.StatusOK, "Redirecting to login page...")
+	}
+
+	user, err := repo.GetUserByID(userID)
+	if err != nil {
+		c.Logger().Error("GetUserByID error:", err)
+		return c.String(http.StatusInternalServerError, "Error retrieving user data")
+	}
+
+	// Fetch deleted cards from repository.
+	c.Logger().Info("Fetching deleted cards for lecturer...")
+	rawCards, err := repo.GetDeletedCardsByLecturer(userID)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "Error fetching deleted cards")
+	}
+
+	// Group cards by month/year.
+	groupStart := time.Now()
+	cardsByMonth := make(map[string][]UIcomponents.Card)
+	monthOrder := make(map[string]time.Time)
+	total := len(rawCards)
+
+	for _, card := range rawCards {
+		// Parse the date (card.Date is expected in "02/01/2006" format).
+		parsedDate, err := time.Parse("02/01/2006", card.Date)
+		if err != nil {
+			c.Logger().Warn("Skipping card due to date parse error:", err)
+			continue
+		}
+		monthLabel := utils.HebrewMonths[parsedDate.Month()]
+		monthYearKey := monthLabel + " " + strconv.Itoa(parsedDate.Year())
+
+		// Append the card (which already contains the ID, Title, Lecturer, Field, etc.)
+		cardsByMonth[monthYearKey] = append(cardsByMonth[monthYearKey], card)
+
+		// Record the first day of the month for sorting.
+		if _, exists := monthOrder[monthYearKey]; !exists {
+			monthOrder[monthYearKey] = time.Date(parsedDate.Year(), parsedDate.Month(), 1, 0, 0, 0, 0, time.UTC)
+		}
+	}
+	c.Logger().Infof("Grouped deleted cards by month in %s", time.Since(groupStart))
+	c.Logger().Infof("Total deleted cards processed: %d", total)
+
+	// Build sorted date sections.
+	sortStart := time.Now()
+	var dateSections []UIcomponents.DateSection
+	for key, cards := range cardsByMonth {
+		dateSections = append(dateSections, UIcomponents.DateSection{
+			DateLabel: key,
+			Cards:     cards,
+		})
+	}
+	sort.Slice(dateSections, func(i, j int) bool {
+		return monthOrder[dateSections[i].DateLabel].After(monthOrder[dateSections[j].DateLabel])
+	})
+	c.Logger().Infof("Sorted date sections in %s", time.Since(sortStart))
+
+	header := UIcomponents.HeaderData{
+		Title: "Trash",
+		Name:  user.Name,
+	}
+	content := UIcomponents.CoursesData{
+		Total:        total,
+		Attempts:     0,
+		InReview:     0,
+		Approved:     0,
+		DateSections: dateSections,
+	}
+	pageData := UIcomponents.PageData{
+		Header:  header,
+		Content: content,
+	}
+
+	return c.Render(http.StatusOK, "trash-page", pageData)
+}
+
+// handlePermanentDeleteSyllabus permanently deletes a syllabus from the database
+func handlePermanentDeleteSyllabus(c echo.Context, repo *repository.Repository) error {
+	// Get the syllabus ID from the URL parameter
+	syllabusID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.Logger().Error("Invalid syllabus ID:", err)
+		return c.String(http.StatusBadRequest, "Invalid syllabus ID")
+	}
+
+	// Delete the syllabus from the database
+	err = repo.DeleteSyllabus(syllabusID)
+	if err != nil {
+		c.Logger().Error("Error deleting syllabus:", err)
+		return c.String(http.StatusInternalServerError, "Error deleting syllabus")
+	}
+
+	// Return an empty response to indicate success (the card will be removed from the UI)
+	return c.NoContent(http.StatusOK)
+}

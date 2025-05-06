@@ -13,7 +13,11 @@
                 <ul class="sidebar-menu">
                     <li class="sidebar-item">סילבוסים כלליים</li>
                     <li class="sidebar-item">ארכיון</li>
-                    <li class="sidebar-item">פח אשפה</li>
+                    <li class="sidebar-item"
+                        hx-get="/trash"
+                        hx-target=".main-layout"
+                        hx-swap="outerHTML"
+                        hx-push-url="true">פח אשפה</li>
                 </ul>
             </div>
         </aside>

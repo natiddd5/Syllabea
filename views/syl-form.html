@@ -497,9 +497,7 @@
             ⚙ פעולות
         </button>
         <button class="btn save"
-                hx-post="/syllabus/view"
-                hx-trigger="click"
-                hx-vals='{"syllabus_id": "{{.ID}}"}'>
+                onclick="window.open('/syllabus/preview/{{.ID}}', '_blank')">
             👁 הצגה
         </button>
         <button class="btn submit"

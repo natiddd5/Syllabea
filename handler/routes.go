@@ -118,6 +118,15 @@ func RegisterRoutes(e *echo.Echo, repo *repository.Repository) {
 		return handleAddComment(c, repo)
 	})
 
+	// Preview syllabus routes
+	e.GET("/syllabus/preview/:id", func(c echo.Context) error {
+		return HandleSyllabusPreview(c, repo)
+	})
+
+	e.POST("/syllabus/preview", func(c echo.Context) error {
+		return HandleSyllabusPreviewFromForm(c, repo)
+	})
+
 	// Logout endpoint
 	e.POST("/logout", func(c echo.Context) error {
 		return handleLogout(c)
@@ -126,5 +135,15 @@ func RegisterRoutes(e *echo.Echo, repo *repository.Repository) {
 	// Delete syllabus endpoint
 	e.DELETE("/delete-syllabus/:id", func(c echo.Context) error {
 		return handleDeleteSyllabus(c, repo)
+	})
+
+	// Trash page endpoint
+	e.GET("/trash", func(c echo.Context) error {
+		return handleTrashPage(c, repo)
+	})
+
+	// Permanent delete syllabus endpoint
+	e.DELETE("/permanent-delete-syllabus/:id", func(c echo.Context) error {
+		return handlePermanentDeleteSyllabus(c, repo)
 	})
 }

@@ -445,6 +445,58 @@ func (r *Repository) GetCardsByLecturer(lecturerID int) ([]UIcomponents.Card, er
 	return cards, nil
 }
 
+// GetDeletedCardsByLecturer fetches all deleted syllabi for the given lecturer (user) ID.
+func (r *Repository) GetDeletedCardsByLecturer(lecturerID int) ([]UIcomponents.Card, error) {
+	query := `
+		SELECT s.id, s.status, s.submission_date, c.name AS courseName, d.name AS departmentName, u.name AS lecturerName
+		FROM syllabi s
+		JOIN courses c ON s.course_id = c.id
+		JOIN departments d ON c.department_id = d.id
+		JOIN users u ON s.lecturer_id = u.id
+		WHERE s.lecturer_id = ? and status = 'Deleted'
+		ORDER BY s.submission_date DESC
+	`
+	rows, err := r.DB.Query(query, lecturerID)
+	if err != nil {
+		return nil, fmt.Errorf("GetDeletedCardsByLecturer: %w", err)
+	}
+	defer rows.Close()
+
+	var cards []UIcomponents.Card
+	for rows.Next() {
+		var (
+			id                int
+			status            string
+			submissionDateStr string
+			courseName        string
+			departmentName    string
+			lecturerName      string
+		)
+
+		if err := rows.Scan(&id, &status, &submissionDateStr, &courseName, &departmentName, &lecturerName); err != nil {
+			return nil, fmt.Errorf("GetDeletedCardsByLecturer scan: %w", err)
+		}
+
+		submissionDate, err := time.Parse("2006-01-02", submissionDateStr)
+		if err != nil {
+			return nil, fmt.Errorf("parsing date: %w", err)
+		}
+
+		card := UIcomponents.Card{
+			ID:          id,
+			Date:        submissionDate.Format("02/01/2006"),
+			Title:       courseName,
+			Lecturer:    lecturerName,
+			Field:       departmentName,
+			Status:      status,
+			StatusLabel: status,
+		}
+		cards = append(cards, card)
+	}
+
+	return cards, nil
+}
+
 func (r *Repository) FilterCardsByLecturer(lecturerID int, search, fromDate, toDate string, statuses []string) ([]map[string]interface{}, error) {
 	baseQuery := `
 		SELECT s.status, s.submission_date, c.name AS courseName, d.name AS departmentName, u.name AS lecturerName
