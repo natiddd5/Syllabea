@@ -1,0 +1,57 @@
+{{ define "trash-page" }}
+    <main class="main-layout">
+        <aside class="sidebar">
+            <button class="sidebar-button"
+                    hx-get="/syllabus/create"
+                    hx-target=".main-layout"
+                    hx-swap="outerHTML">
+                סילבוס חדש
+                <span class="material-symbols-outlined">add</span>
+            </button>
+
+            <div class="outer-sidebar-menu">
+                <ul class="sidebar-menu">
+                    <li class="sidebar-item"
+                        hx-get="/dashboard"
+                        hx-target=".main-layout"
+                        hx-swap="outerHTML"
+                        hx-push-url="true">סילבוסים כלליים</li>
+                    <li class="sidebar-item">ארכיון</li>
+                    <li class="sidebar-item active"
+                        hx-get="/trash"
+                        hx-target=".main-layout"
+                        hx-swap="outerHTML"
+                        hx-push-url="true">פח אשפה</li>
+                </ul>
+            </div>
+        </aside>
+        <div class="main-container">
+            <section class="content">
+                <div class="statistics-section">
+                    <div class="statistics">
+                        <h3>פח אשפה</h3>
+                        <div class="stat-separator"></div>
+                        <div class="stat-item">
+                            <span class="stat-number">{{ .Content.Total }}</span>
+                            <span class="stat-label">סה"כ</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <div class="outer-container">
+                <div class="headers">
+                    <div class="header-column">שם הסילבוס</div>
+                    <div class="header-column">המרצה</div>
+                    <div class="header-column">התחום</div>
+                    <div class="header-column">סטטוס</div>
+                    <div class="header-column">הערות</div>
+                    <div class="header-column"></div>
+                </div>
+                <div class="divider"></div>
+                {{ range .Content.DateSections }}
+                    {{ template "trash-date-section.html" . }}
+                {{ end }}
+            </div>
+        </div>
+    </main>
+{{ end }}

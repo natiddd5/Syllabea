@@ -1,0 +1,140 @@
+{{ define "trash-card.html" }}
+    <style>
+        /* Fade‑in animation for the card */
+        .card {
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+        }
+        @keyframes fadeIn { to { opacity: 1; } }
+
+        /* Card styles for deleted items */
+        .card.deleted {
+            border-right-color: #ff0000 !important;
+        }
+
+        .status-column.deleted {
+            background-color: #ff0000 !important;
+        }
+
+        /* Delete Modal Styles */
+        .delete-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .delete-modal-content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .delete-modal-buttons {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .delete-modal-button {
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: none;
+        }
+
+        .delete-modal-button-yes {
+            background-color: #ff3838;
+            color: white;
+        }
+
+        .delete-modal-button-no {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+    </style>
+
+    {{/* Map server value → CSS‑class keyword */}}
+    {{- $cls := "" -}}
+    {{- if eq .StatusLabel "Draft"       }}{{ $cls = "draft"      }}{{ end -}}
+    {{- if eq .StatusLabel "In Review"   }}{{ $cls = "in-review"  }}{{ end -}}
+    {{- if eq .StatusLabel "Approved"    }}{{ $cls = "approved"   }}{{ end -}}
+    {{- if eq .StatusLabel "Deleted"     }}{{ $cls = "deleted"    }}{{ end -}}
+
+    <div class="card {{ $cls }}" id="card-{{ .ID }}">
+        <div class="info-column">
+            <div class="info-title">{{ .Title }}</div>
+            <div class="info-date">{{ .Date }}</div>
+        </div>
+        <div class="info-column">{{ .Lecturer }}</div>
+        <div class="info-column">{{ .Field }}</div>
+
+        {{/* Hebrew display label */}}
+        <div class="status-column {{ $cls }}">
+            {{- if eq .StatusLabel "Draft"     }}טיוטא
+            {{- else if eq .StatusLabel "In Review" }}בתהליך
+            {{- else if eq .StatusLabel "Approved"  }}מאושר
+            {{- else if eq .StatusLabel "Deleted"   }}נמחק
+            {{- end }}
+        </div>
+
+        <div class="icons-column">
+            <div class="notes-icon">
+                <span class="material-symbols-outlined"
+                      onclick="window.open('/syllabus/preview/{{ .ID }}', '_blank')">visibility</span>
+                <span class="material-symbols-outlined delete-button"
+                      onclick="showDeleteModal({{ .ID }})">delete_forever</span>
+            </div>
+            <span class="material-symbols-outlined">note</span>
+        </div>
+    </div>
+
+    <!-- Permanent Delete Confirmation Modal -->
+    <div id="deleteModal-{{ .ID }}" class="delete-modal">
+        <div class="delete-modal-content">
+            <h3>האם אתה בטוח שברצונך למחוק לצמיתות את הסילבוס?</h3>
+            <p>פעולה זו אינה ניתנת לביטול!</p>
+            <div class="delete-modal-buttons">
+                <button class="delete-modal-button delete-modal-button-no" onclick="hideDeleteModal({{ .ID }})">לא</button>
+                <button 
+                    class="delete-modal-button delete-modal-button-yes"
+                    hx-delete="/permanent-delete-syllabus/{{ .ID }}"
+                    hx-target="#card-{{ .ID }}"
+                    hx-swap="outerHTML"
+                    onclick="hideDeleteModal({{ .ID }})">
+                    כן
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showDeleteModal(id) {
+            document.getElementById('deleteModal-' + id).style.display = 'flex';
+        }
+
+        function hideDeleteModal(id) {
+            document.getElementById('deleteModal-' + id).style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        (function(id) {
+            document.getElementById('deleteModal-' + id).addEventListener('click', function(event) {
+                if (event.target === this) {
+                    hideDeleteModal(id);
+                }
+            });
+        })({{ .ID }});
+    </script>
+{{ end }}

@@ -1,0 +1,407 @@
+{{ define "syllabus-preview.html" }}
+    <!DOCTYPE html>
+    <html lang="he" dir="rtl">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>תצוגה מקדימה של סילבוס</title>
+        <style>
+            /* Global Reset & Base */
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            :root {
+                --primary-blue: #617CFF;
+                --primary-blue-hover: #5871e8;
+                --text-color: #666666;
+                --text-dark: #333333;
+                --text-light: #d0d0d0;
+                --border-color: #e0e0e0;
+                --bg-light: #f5f5f5;
+                --bg-white: #ffffff;
+                --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            body {
+                font-family: 'Rubik', Arial, sans-serif;
+                line-height: 1.6;
+                color: var(--text-color);
+                max-width: 1100px;
+                margin: 0 auto;
+                padding: 20px;
+                background-color: var(--bg-light);
+            }
+
+            /* Preview Header */
+            .preview-header {
+                text-align: center;
+                margin-bottom: 25px;
+                padding-bottom: 15px;
+                position: relative;
+            }
+
+            .preview-header:after {
+                content: '';
+                position: absolute;
+                bottom: 0;
+                right: 25%;
+                width: 50%;
+                height: 2px;
+                background-color: var(--border-color);
+            }
+
+            .preview-title {
+                font-size: 24px;
+                font-weight: bold;
+                margin-bottom: 10px;
+                color: var(--text-dark);
+            }
+
+            /* Sections */
+            .preview-section {
+                margin-bottom: 25px;
+                background-color: var(--bg-white);
+                border-radius: 8px;
+                padding: 20px;
+                box-shadow: var(--shadow);
+            }
+
+            .preview-section-title {
+                font-size: 18px;
+                font-weight: bold;
+                margin-bottom: 15px;
+                padding-bottom: 8px;
+                color: var(--text-dark);
+                border-bottom: 1px solid var(--border-color);
+            }
+
+            /* Info Items */
+            .preview-info {
+                display: flex;
+                flex-wrap: wrap;
+                margin-bottom: 15px;
+            }
+
+            .preview-info-item {
+                flex: 1;
+                min-width: 250px;
+                margin-bottom: 10px;
+                padding-right: 15px;
+            }
+
+            .preview-info-label {
+                font-weight: 600;
+                margin-left: 5px;
+                color: var(--text-dark);
+            }
+
+            /* Lists */
+            .preview-list {
+                list-style-type: decimal;
+                padding-right: 25px;
+                margin: 10px 0;
+            }
+
+            .preview-list li {
+                margin-bottom: 8px;
+                line-height: 1.6;
+            }
+
+            /* Tables */
+            .preview-table {
+                width: 100%;
+                border-collapse: separate;
+                border-spacing: 0;
+                margin: 15px 0;
+                border-radius: 8px;
+                overflow: hidden;
+                box-shadow: var(--shadow);
+            }
+
+            .preview-table th, .preview-table td {
+                border: 1px solid var(--border-color);
+                padding: 12px 15px;
+                text-align: right;
+            }
+
+            .preview-table th {
+                background-color: var(--primary-blue);
+                color: white;
+                font-weight: 500;
+            }
+
+            .preview-table tr:nth-child(even) {
+                background-color: #f9f9f9;
+            }
+
+            .preview-table tr:hover {
+                background-color: rgba(97, 124, 255, 0.05);
+            }
+
+            /* Close Button */
+            .preview-close-btn {
+                position: fixed;
+                top: 20px;
+                left: 20px;
+                background-color: var(--primary-blue);
+                color: white;
+                font-size: 16px;
+                padding: 10px 15px;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                transition: background-color 0.2s ease;
+                box-shadow: var(--shadow);
+            }
+
+            .preview-close-btn:hover {
+                background-color: var(--primary-blue-hover);
+            }
+
+            /* Print Styles */
+            @media print {
+                .preview-close-btn {
+                    display: none;
+                }
+
+                body {
+                    padding: 0;
+                    margin: 0;
+                    background-color: white;
+                }
+
+                .preview-section {
+                    box-shadow: none;
+                    page-break-inside: avoid;
+                    border: 1px solid var(--border-color);
+                }
+
+                @page {
+                    margin: 2cm;
+                }
+            }
+
+            /* Responsive Styles */
+            @media screen and (max-width: 800px) {
+                body {
+                    padding: 15px;
+                }
+
+                .preview-info-item {
+                    min-width: 100%;
+                }
+
+                .preview-table {
+                    font-size: 14px;
+                }
+
+                .preview-table th, .preview-table td {
+                    padding: 8px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+    <button class="preview-close-btn" onclick="window.close()">סגור</button>
+
+    <div class="preview-header">
+        <div class="preview-title">סילבוס: {{ .SelectedCourse }}</div>
+        <div>{{ .SyllabusDepartment }}</div>
+    </div>
+
+    <div class="preview-section">
+        <div class="preview-section-title">פרטי המרצה</div>
+        <div class="preview-info">
+            <div class="preview-info-item">
+                <span class="preview-info-label">שם המרצה:</span>
+                <span>{{ .LecturerName }}</span>
+            </div>
+            <div class="preview-info-item">
+                <span class="preview-info-label">אימייל:</span>
+                <span>{{ .LecturerEmail }}</span>
+            </div>
+        </div>
+        <div class="preview-info">
+            <div class="preview-info-item">
+                <span class="preview-info-label">שעות קבלה:</span>
+                <span>יום {{ .OfficeDay }}, {{ .OfficeStart }} - {{ .OfficeEnd }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="preview-section">
+        <div class="preview-section-title">פרטי הקורס</div>
+        <div class="preview-info">
+            <div class="preview-info-item">
+                <span class="preview-info-label">נקודות זכות:</span>
+                <span>{{ .Credits }}</span>
+            </div>
+            <div class="preview-info-item">
+                <span class="preview-info-label">שעות שבועיות:</span>
+                <span>{{ .WeeklyHours }}</span>
+            </div>
+            <div class="preview-info-item">
+                <span class="preview-info-label">שנה:</span>
+                <span>{{ .Year }}</span>
+            </div>
+            <div class="preview-info-item">
+                <span class="preview-info-label">סמסטר:</span>
+                <span>{{ .Semester }}</span>
+            </div>
+        </div>
+        <div class="preview-info">
+            <div class="preview-info-item">
+                <span class="preview-info-label">דרישות קדם:</span>
+                <span>{{ .Prerequisites }}</span>
+            </div>
+        </div>
+        <div class="preview-info">
+            <div class="preview-info-item">
+                <span class="preview-info-label">מבנה הקורס:</span>
+                <span>
+                    {{ range $index, $structure := .CourseStructure }}
+                        {{ if $index }}, {{ end }}
+                        {{ if eq $structure "lecture" }}הרצאה{{ end }}
+                        {{ if eq $structure "practice" }}תרגול{{ end }}
+                        {{ if eq $structure "other" }}{{ $.OtherCourseStructure }}{{ end }}
+                    {{ end }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="preview-section">
+        <div class="preview-section-title">דרישות הקורס</div>
+        <ol class="preview-list">
+            {{ range .CourseRequirements }}
+                <li>{{ . }}</li>
+            {{ end }}
+        </ol>
+    </div>
+
+    <div class="preview-section">
+        <div class="preview-section-title">תוצרי למידה</div>
+        <ol class="preview-list">
+            {{ range .LearningOutcomes }}
+                <li>{{ . }}</li>
+            {{ end }}
+        </ol>
+    </div>
+
+    <div class="preview-section">
+        <div class="preview-section-title">מטרות הקורס</div>
+        <ol class="preview-list">
+            {{ range .CourseObjectives }}
+                <li>{{ . }}</li>
+            {{ end }}
+        </ol>
+    </div>
+
+    <div class="preview-section">
+        <div class="preview-section-title">למידה פעילה</div>
+        <div class="preview-info">
+            <div class="preview-info-item" style="flex: 100%;">
+                <span class="preview-info-label">אילו שיטות הוראה לקידום למידה פעילה יבואו לידי ביטוי בקורס על ידי המרצה?</span>
+                <p>{{ .ActiveLearning1 }}</p>
+            </div>
+        </div>
+        <div class="preview-info">
+            <div class="preview-info-item" style="flex: 100%;">
+                <span class="preview-info-label">מהם הכלים המתאימים לסטודנטים לצורך יישום למידה עצמאית ופעילה?</span>
+                <p>{{ .ActiveLearning2 }}</p>
+            </div>
+        </div>
+        <div class="preview-info">
+            <div class="preview-info-item" style="flex: 100%;">
+                <span class="preview-info-label">כיצד תבוא לידי ביטוי למידה פעילה?</span>
+                <p>{{ .ActiveLearning3 }}</p>
+            </div>
+        </div>
+        <div class="preview-info">
+            <div class="preview-info-item" style="flex: 100%;">
+                <span class="preview-info-label">כיצד יווצר מרחב למידה המחייב הדדיות ואינטראקציה בין הסטודנטים?</span>
+                <p>{{ .ActiveLearning4 }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="preview-section">
+        <div class="preview-section-title">נושאי הקורס</div>
+        <table class="preview-table">
+            <thead>
+            <tr>
+                <th>מספר שיעור</th>
+                <th>נושאים</th>
+                <th>נושאי השיעור</th>
+                <th>פירוט תתי נושאים</th>
+                <th>לקריאה</th>
+            </tr>
+            </thead>
+            <tbody>
+            {{ range .SyllabusRows }}
+                <tr>
+                    <td>{{ .LessonNumber }}</td>
+                    <td>{{ .MainTopic }}</td>
+                    <td>{{ .LessonTopics }}</td>
+                    <td>{{ .Subtopics }}</td>
+                    <td>{{ .ReadingMaterial }}</td>
+                </tr>
+            {{ end }}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="preview-section">
+        <div class="preview-section-title">הרכב הציון</div>
+        <table class="preview-table">
+            <thead>
+            <tr>
+                <th>חלק</th>
+                <th>אחוז</th>
+            </tr>
+            </thead>
+            <tbody>
+            {{ range .GradeComponents }}
+                <tr>
+                    <td>{{ .PartName }}</td>
+                    <td>{{ .Percentage }}%</td>
+                </tr>
+            {{ end }}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="preview-section">
+        <div class="preview-section-title">מבנה המטלות</div>
+        <ol class="preview-list">
+            {{ range .AssignmentsStructure }}
+                <li>{{ . }}</li>
+            {{ end }}
+        </ol>
+    </div>
+
+    <div class="preview-section">
+        <div class="preview-section-title">ביבליוגרפיה</div>
+        <div class="preview-info-item" style="flex: 100%;">
+            <span class="preview-info-label">קריאת חובה:</span>
+            <ol class="preview-list">
+                {{ range .BibliographyRequired }}
+                    <li>{{ . }}</li>
+                {{ end }}
+            </ol>
+        </div>
+        <div class="preview-info-item" style="flex: 100%;">
+            <span class="preview-info-label">קריאת רשות:</span>
+            <ol class="preview-list">
+                {{ range .BibliographyRecommended }}
+                    <li>{{ . }}</li>
+                {{ end }}
+            </ol>
+        </div>
+    </div>
+    </body>
+    </html>
+{{ end }}
