@@ -1,0 +1,21 @@
+version: '3.8'
+services:
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_DATABASE: syllabus
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./migratoins:/docker-entrypoint-initdb.d
+  app:
+    build: .
+    depends_on:
+      - db
+    environment:
+      MYSQL_DSN: root:admin@tcp(db:3306)/syllabus
+    ports:
+      - "9090:9090"
+    restart: always
