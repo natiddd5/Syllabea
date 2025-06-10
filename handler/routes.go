@@ -1,34 +1,26 @@
 package handler
 
 import (
+	"Syllybea/mid"
 	"Syllybea/repository"
-	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"net/http"
+	"time"
 )
 
 var r repository.Repository
 
-// handleLogout clears the user session and redirects to the login page
+// handleLogout removes the JWT cookie and redirects to the login page
 func handleLogout(c echo.Context) error {
-	sess, err := session.Get("session", c)
-	if err != nil {
-		c.Logger().Error("Failed to get session during logout:", err)
-		return err
+	cookie := &http.Cookie{
+		Name:     "jwt",
+		Value:    "",
+		Path:     "/",
+		Expires:  time.Unix(0, 0),
+		HttpOnly: true,
 	}
+	http.SetCookie(c.Response(), cookie)
 
-	// Clear session values
-	sess.Values = make(map[interface{}]interface{})
-
-	// Save the session
-	if err := sess.Save(c.Request(), c.Response()); err != nil {
-		c.Logger().Error("Failed to save session during logout:", err)
-		return err
-	}
-
-	c.Logger().Info("User logged out successfully")
-
-	// Set the HX-Redirect header for HTMX to handle the redirect
 	c.Response().Header().Set("HX-Redirect", "/login")
 	return c.String(http.StatusOK, "Redirecting to login page...")
 }
@@ -58,20 +50,21 @@ func RegisterRoutes(e *echo.Echo, repo *repository.Repository) {
 			return c.String(http.StatusUnauthorized, "אימייל לא קיים")
 		}
 
-		// Create a session and store the user's ID and email.
-		sess, err := session.Get("session", c)
+		token, err := mid.GenerateToken(user.ID)
 		if err != nil {
-			c.Logger().Error("Failed to get session during login:", err)
-			return err
+			c.Logger().Error("Failed to generate token:", err)
+			return c.String(http.StatusInternalServerError, "error")
 		}
-		sess.Values["user_id"] = user.ID
-		sess.Values["email"] = user.Email
 
-		if err := sess.Save(c.Request(), c.Response()); err != nil {
-			c.Logger().Error("Failed to save session:", err)
-			return err
+		cookie := &http.Cookie{
+			Name:     "jwt",
+			Value:    token,
+			Path:     "/",
+			HttpOnly: true,
+			Expires:  time.Now().Add(24 * time.Hour),
 		}
-		c.Logger().Info("Session saved successfully for user:", user.Email)
+		http.SetCookie(c.Response(), cookie)
+		c.Logger().Info("JWT cookie set for user:", user.Email)
 
 		// Set the HX-Redirect header for HTMX and perform redirect.
 		c.Response().Header().Set("HX-Redirect", "/dashboard")

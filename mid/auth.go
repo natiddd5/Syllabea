@@ -2,44 +2,67 @@ package mid
 
 import (
 	"errors"
-	"github.com/labstack/echo-contrib/session"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 	"net/http"
-	"strconv"
+	"strings"
+	"time"
 )
 
-// GetUserID retrieves the user ID from the session.
+var jwtSecret = []byte("secret")
+
+type customClaims struct {
+	UserID int `json:"user_id"`
+	jwt.RegisteredClaims
+}
+
+// GenerateToken creates a signed JWT containing the user's ID.
+func GenerateToken(userID int) (string, error) {
+	claims := customClaims{
+		UserID: userID,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(jwtSecret)
+}
+
+func parseToken(tokenStr string) (*customClaims, error) {
+	claims := &customClaims{}
+	token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
+		return jwtSecret, nil
+	})
+	if err != nil || !token.Valid {
+		return nil, errors.New("invalid token")
+	}
+	return claims, nil
+}
+
+// GetUserID retrieves the user ID from a JWT placed in the Authorization header or cookie.
 func GetUserID(c echo.Context) (int, error) {
-	sess, err := session.Get("session", c)
+	tokenStr := ""
+
+	authHeader := c.Request().Header.Get("Authorization")
+	if strings.HasPrefix(authHeader, "Bearer ") {
+		tokenStr = strings.TrimPrefix(authHeader, "Bearer ")
+	} else if cookie, err := c.Cookie("jwt"); err == nil {
+		tokenStr = cookie.Value
+	}
+
+	if tokenStr == "" {
+		c.Logger().Warn("missing JWT token")
+		return 0, errors.New("token missing")
+	}
+
+	claims, err := parseToken(tokenStr)
 	if err != nil {
-		c.Logger().Error("Failed to get session:", err)
+		c.Logger().Warn("invalid token: ", err)
 		return 0, err
 	}
 
-	userIDVal, ok := sess.Values["user_id"]
-	if !ok {
-		c.Logger().Warn("No user_id found in session")
-		return 0, errors.New("user not logged in")
-	}
-
-	var userID int
-	switch v := userIDVal.(type) {
-	case int:
-		userID = v
-	case int64:
-		userID = int(v)
-	case string:
-		userID, err = strconv.Atoi(v)
-		if err != nil {
-			c.Logger().Error("Error converting user_id to int:", err)
-			return 0, errors.New("invalid user id")
-		}
-	default:
-		c.Logger().Error("Invalid type for user_id:", v)
-		return 0, errors.New("invalid user id type")
-	}
-
-	return userID, nil
+	return claims.UserID, nil
 }
 
 // AuthMiddleware checks for a valid session and redirects to login if not found.

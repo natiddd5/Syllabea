@@ -3,11 +3,8 @@ package main
 import (
 	"Syllybea/Render"
 	"Syllybea/handler"
-	"Syllybea/mid"
 	"Syllybea/repository"
 	"Syllybea/storage"
-	"github.com/gorilla/sessions"
-	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"html/template"
@@ -39,16 +36,11 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	// Use session mid with a key
-	e.Use(session.Middleware(sessions.NewCookieStore([]byte("secret"))))
-
 	e.Renderer = Render.NewTemplate()
 
 	e.Static("/static", "static")
 
 	handler.RegisterRoutes(e, repo)
-	authGroup := e.Group("")
-	authGroup.Use(mid.AuthMiddleware)
 
 	e.Logger.Fatal(e.Start(":9090"))
 }
