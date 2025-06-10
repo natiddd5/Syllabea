@@ -13,6 +13,7 @@ import (
 	"html/template"
 	"io"
 	"log"
+	"os"
 )
 
 // TemplateRenderer is a custom renderer for Echo using the Go html/template package.
@@ -26,7 +27,10 @@ func (t *TemplateRenderer) Render(w io.Writer, name string, data interface{}, c 
 }
 
 func main() {
-	dsn := "root:admin@tcp(localhost:3306)/syllabus"
+	dsn := os.Getenv("MYSQL_DSN")
+	if dsn == "" {
+		dsn = "root:admin@tcp(localhost:3306)/syllabus"
+	}
 	store, err := storage.NewStorage(dsn)
 	if err != nil {
 		log.Fatalf("Could not create storage: %v", err)
